@@ -32,6 +32,25 @@ Slash command：
 
 支持模式：Full Review（默认）、Question Extraction、Answer Critique、Interviewer Intelligence、Cross Interview Review、Next Round Prep。
 
+## Full Review 输出结构（16 章）
+
+1. **Executive Summary** — 执行摘要：最大优势、最大风险、最可能在下一轮追问被拆穿的断点
+2. **Interview Structure** — 面试阶段划分与各阶段权重
+3. **Complete Question Map** — 全部问题 + 追问 + 表面问题 + 考察意图 + 能力维度
+4. **Follow-up Trees** — 追问树（把追问归到根问题）
+5. **Competency Mapping** — 能力 → 证据 → 信号强度 → 置信度
+6. **Key Answer Reviews** — 关键回答五维评分（Substance/Structure/Relevance/Credibility/Differentiation）+ 根因
+7. **Evidence & Quotes** — 证据与原文引用（Fact/Inference 分层）
+8. **Shortcoming Cards** — 短板卡（按严重度排序）
+9. **Anti-patterns** — 反模式趋势（反复出现的坏习惯）
+10. **Project Probe Depth** — 项目深挖层次（面试官挖到第几层）
+11. **AI PM / Growth PM Special Review** — 岗位专项诊断（动态启用）
+12. **Interviewer Signals** — 面试官信号（建设性深入 vs 打发）
+13. **Reverse Interview Intelligence** — 反问环节的情报提取
+14. **Shadow JD** — 反推岗位真实画像与能力权重
+15. **Cross-interview Update** — 跨场更新（多场面试的题库累积）
+16. **Next Interview Actions** — 下一场行动（P0/P1/P2 优先级）
+
 ## 实录与回答建议
 
 - **实录前置**：复盘最前面可加「面试官问题原文 + 追问 + 回复」实录，问题原文用引用格式、连续编号，追问与回复分别标注「面试官」「候选人」。
