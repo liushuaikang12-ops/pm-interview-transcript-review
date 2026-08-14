@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.hermes/pm-interview-transcript-review/interview-record.schema.json",
+  "title": "PM Interview Review OS — Interview Record",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "interview_id",
+    "metadata",
+    "source_manifest",
+    "transcript",
+    "questions",
+    "key_answer_reviews",
+    "competency_observations",
+    "shortcoming_cards",
+    "anti_patterns",
+    "projects",
+    "reverse_interview",
+    "shadow_jd",
+    "verdict"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "interview_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$"},
+    "metadata": {
+      "type": "object",
+      "required": ["company", "role", "date", "mode"],
+      "properties": {
+        "company": {"type": "string"},
+        "role": {"type": "string"},
+        "date": {"type": "string"},
+        "round": {"type": ["string", "null"]},
+        "mode": {"enum": ["full", "question-extraction", "answer-critique", "interviewer-intelligence", "cross-interview", "next-round-prep"]},
+        "role_types": {"type": "array", "items": {"enum": ["PM", "AI PM", "Growth PM", "Strategy PM"]}, "uniqueItems": true}
+      },
+      "additionalProperties": true
+    },
+    "source_manifest": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "type", "location", "timestamped"],
+        "properties": {
+          "source_id": {"type": "string"},
+          "type": {"enum": ["audio", "video", "transcript", "jd", "resume", "project-doc", "history", "feedback", "other"]},
+          "location": {"type": "string"},
+          "timestamped": {"type": "boolean"},
+          "sha256": {"type": ["string", "null"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "transcript": {
+      "type": "object",
+      "required": ["completeness", "speaker_reliability", "timestamp_reliability"],
+      "properties": {
+        "completeness": {"enum": ["full", "partial", "unknown"]},
+        "speaker_reliability": {"enum": ["high", "medium", "low", "unknown"]},
+        "timestamp_reliability": {"enum": ["high", "medium", "low", "none"]},
+        "asr_notes": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "parent_id", "speaker", "surface_question", "answer_anchor", "type", "competencies"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^Q[0-9]{2,}(\\.[0-9]+)*$"},
+          "parent_id": {"type": ["string", "null"]},
+          "speaker": {"type": "string"},
+          "surface_question": {"type": "string"},
+          "canonical_question": {"type": "string"},
+          "answer_anchor": {"type": ["string", "null"]},
+          "type": {"enum": ["root", "follow-up", "administrative", "candidate-reverse-question"]},
+          "parent_confidence": {"enum": ["high", "medium", "low", "not-applicable"]},
+          "underlying_intent": {
+            "type": ["object", "null"],
+            "properties": {
+              "statement": {"type": "string"},
+              "label": {"const": "inference"},
+              "confidence": {"enum": ["high", "medium", "low"]}
+            },
+            "required": ["statement", "label", "confidence"],
+            "additionalProperties": false
+          },
+          "competencies": {"type": "array", "items": {"type": "string"}, "maxItems": 3}
+        },
+        "additionalProperties": true
+      }
+    },
+    "key_answer_reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question_id", "evidence", "scores", "weight_profile", "overall_score", "gap_type", "root_causes", "suggested_answer"],
+        "properties": {
+          "question_id": {"type": "string"},
+          "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+          "scores": {"$ref": "#/$defs/scores"},
+          "weight_profile": {"type": "string"},
+          "overall_score": {"type": "number", "minimum": 1, "maximum": 10},
+          "gap_type": {"enum": ["Capability", "Communication", "Evidence", "Knowledge", "None"]},
+          "root_causes": {"type": "array", "items": {"type": "string"}, "maxItems": 3},
+          "recommended_structure": {"type": "array", "items": {"type": "string"}},
+          "suggested_answer": {"type": "string"},
+          "provenance": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "competency_observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["competency", "score", "confidence", "question_id", "evidence_anchor"],
+        "properties": {
+          "competency": {"type": "string"},
+          "score": {"type": "number", "minimum": 1, "maximum": 10},
+          "confidence": {"enum": ["high", "medium", "low"]},
+          "question_id": {"type": "string"},
+          "evidence_anchor": {"type": "string"}
+        }
+      }
+    },
+    "shortcoming_cards": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["name", "severity", "frequency", "evidence", "root_cause", "interview_risk", "corrective_principle", "drill"],
+        "properties": {
+          "name": {"type": "string"},
+          "severity": {"enum": ["High", "Medium", "Low"]},
+          "frequency": {"type": "integer", "minimum": 1},
+          "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+          "root_cause": {"type": "string"},
+          "interview_risk": {"type": "string"},
+          "corrective_principle": {"type": "string"},
+          "drill": {"type": "string"}
+        }
+      }
+    },
+    "anti_patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "count", "eligible_answers", "evidence_anchors"],
+        "properties": {
+          "name": {"type": "string"},
+          "count": {"type": "integer", "minimum": 0},
+          "eligible_answers": {"type": "integer", "minimum": 0},
+          "evidence_anchors": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["project_id", "name", "current_probe_depth", "layers"],
+        "properties": {
+          "project_id": {"type": "string"},
+          "name": {"type": "string"},
+          "current_probe_depth": {"type": "integer", "minimum": 0, "maximum": 10},
+          "first_weak_layer": {"type": ["integer", "null"], "minimum": 1, "maximum": 10},
+          "layers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["layer", "status", "evidence_anchor"],
+              "properties": {
+                "layer": {"type": "integer", "minimum": 1, "maximum": 10},
+                "status": {"enum": ["Strong", "Partial", "Missing", "Contradicted", "Insufficient Evidence"]},
+                "evidence_anchor": {"type": ["string", "null"]}
+              }
+            }
+          }
+        }
+      }
+    },
+    "story_candidates": {"type": "array", "items": {"type": "object"}},
+    "reverse_interview": {
+      "type": "object",
+      "required": ["candidate_questions", "facts", "inferences"],
+      "properties": {
+        "candidate_questions": {"type": "array", "items": {"type": "object"}},
+        "facts": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "inferences": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": true
+    },
+    "shadow_jd": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["statement", "evidence_anchors", "confidence", "label"],
+        "properties": {
+          "statement": {"type": "string"},
+          "evidence_anchors": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "confidence": {"enum": ["high", "medium", "low"]},
+          "label": {"const": "inference"}
+        }
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "required": ["overall_performance", "confidence", "strongest_areas", "biggest_risks", "uncertain_areas", "created_at"],
+      "properties": {
+        "overall_performance": {"type": ["number", "string"]},
+        "confidence": {"enum": ["High", "Medium", "Low"]},
+        "strongest_areas": {"type": "array", "maxItems": 5, "items": {"type": "string"}},
+        "biggest_risks": {"type": "array", "maxItems": 5, "items": {"type": "string"}},
+        "uncertain_areas": {"type": "array", "items": {"type": "string"}},
+        "created_at": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "outcome": {
+      "type": ["object", "null"],
+      "properties": {
+        "status": {"enum": ["advanced", "rejected", "offer", "withdrew", "unknown"]},
+        "date": {"type": "string"},
+        "feedback": {"type": ["string", "null"]},
+        "source": {"type": ["string", "null"]}
+      },
+      "required": ["status", "date"],
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "scores": {
+      "type": "object",
+      "required": ["substance", "structure", "relevance", "credibility", "differentiation"],
+      "properties": {
+        "substance": {"type": "number", "minimum": 1, "maximum": 10},
+        "structure": {"type": "number", "minimum": 1, "maximum": 10},
+        "relevance": {"type": "number", "minimum": 1, "maximum": 10},
+        "credibility": {"type": "number", "minimum": 1, "maximum": 10},
+        "differentiation": {"type": "number", "minimum": 1, "maximum": 10}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["anchor", "speaker", "quote", "level"],
+      "properties": {
+        "anchor": {"type": "string"},
+        "speaker": {"type": "string"},
+        "quote": {"type": "string"},
+        "level": {"enum": ["F1", "F2", "I1"]},
+        "confidence": {"enum": ["high", "medium", "low"]}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

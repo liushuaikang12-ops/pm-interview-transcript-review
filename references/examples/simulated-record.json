@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "interview_id": "2099-01-15_xinghe_ai-growth_r1_test",
+  "metadata": {
+    "company": "星河科技（虚构）",
+    "role": "AI 创作增长产品经理（实习）",
+    "date": "2099-01-15",
+    "round": "一面",
+    "mode": "full",
+    "role_types": ["AI PM", "Growth PM"]
+  },
+  "source_manifest": [
+    {"source_id": "S01", "type": "transcript", "location": "references/examples/simulated-transcript.md", "timestamped": true},
+    {"source_id": "S02", "type": "jd", "location": "references/examples/simulated-jd.md", "timestamped": false},
+    {"source_id": "S03", "type": "resume", "location": "references/examples/simulated-resume.md", "timestamped": false}
+  ],
+  "transcript": {"completeness": "full", "speaker_reliability": "high", "timestamp_reliability": "high", "asr_notes": "人工模拟文本"},
+  "questions": [
+    {"id": "Q01", "parent_id": null, "speaker": "Interviewer", "surface_question": "两分钟以内自我介绍，重点说岗位相关经历", "canonical_question": "请做岗位相关的自我介绍", "answer_anchor": "[00:01:13–00:03:25]", "type": "root", "parent_confidence": "not-applicable", "underlying_intent": {"statement": "验证岗位匹配与沟通优先级", "label": "inference", "confidence": "high"}, "competencies": ["Structure", "Relevance"]},
+    {"id": "Q02", "parent_id": null, "speaker": "Interviewer", "surface_question": "挑一个最能体现产品判断的项目", "canonical_question": "讲一个体现产品判断的项目", "answer_anchor": "[00:03:36–00:05:10]", "type": "root", "parent_confidence": "not-applicable", "underlying_intent": {"statement": "验证完整产品证据链", "label": "inference", "confidence": "high"}, "competencies": ["Problem Definition", "Decision Making"]},
+    {"id": "Q02.1", "parent_id": "Q02", "speaker": "Interviewer", "surface_question": "为什么做这个项目而不是别的问题", "canonical_question": "为什么优先做这个项目", "answer_anchor": "[00:05:21–00:06:02]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证优先级依据", "label": "inference", "confidence": "high"}, "competencies": ["Prioritization"]},
+    {"id": "Q02.2", "parent_id": "Q02", "speaker": "Interviewer", "surface_question": "怎么发现是激活问题而不是内容供给", "canonical_question": "如何定位问题根因", "answer_anchor": "[00:06:14–00:07:08]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证问题定位与用户证据", "label": "inference", "confidence": "high"}, "competencies": ["Root Cause Analysis", "User Insight"]},
+    {"id": "Q02.2.1", "parent_id": "Q02.2", "speaker": "Interviewer", "surface_question": "具体数据、样本和口径是什么", "canonical_question": "数据样本和口径是什么", "answer_anchor": "[00:07:17–00:08:02]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证证据可靠性", "label": "inference", "confidence": "high"}, "competencies": ["Metrics", "Credibility"]},
+    {"id": "Q02.3", "parent_id": "Q02", "speaker": "Interviewer", "surface_question": "为什么选新手任务，还有哪些方案", "canonical_question": "为什么选择该方案及替代方案", "answer_anchor": "[00:08:14–00:09:05]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证方案推导与 trade-off", "label": "inference", "confidence": "high"}, "competencies": ["Decision Making", "Trade-off"]},
+    {"id": "Q02.4", "parent_id": "Q02", "speaker": "Interviewer", "surface_question": "用什么指标判断有效", "canonical_question": "如何设计项目指标", "answer_anchor": "[00:09:16–00:10:12]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证指标体系", "label": "inference", "confidence": "high"}, "competencies": ["Metrics", "Guardrail Metrics"]},
+    {"id": "Q02.4.1", "parent_id": "Q02.4", "speaker": "Interviewer", "surface_question": "D1 上涨能证明是任务带来的吗，实验怎么做", "canonical_question": "如何证明结果由方案导致", "answer_anchor": "[00:10:26–00:11:18]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证实验与 attribution", "label": "inference", "confidence": "high"}, "competencies": ["Experiment Design", "Attribution"]},
+    {"id": "Q02.5", "parent_id": "Q02", "speaker": "Interviewer", "surface_question": "有没有异常数据", "canonical_question": "上线后有哪些异常数据", "answer_anchor": "[00:11:31–00:12:28]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证异常分析与闭环", "label": "inference", "confidence": "high"}, "competencies": ["Root Cause Analysis"]},
+    {"id": "Q02.5.1", "parent_id": "Q02.5", "speaker": "Interviewer", "surface_question": "为什么付费下降，怎么验证奖励不够大", "canonical_question": "如何解释并验证异常", "answer_anchor": "[00:12:42–00:13:18]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证根因与证据", "label": "inference", "confidence": "high"}, "competencies": ["Attribution", "Root Cause Analysis"]},
+    {"id": "Q02.6", "parent_id": "Q02", "speaker": "Interviewer", "surface_question": "你个人做的关键决策是什么", "canonical_question": "你个人的关键贡献是什么", "answer_anchor": "[00:13:33–00:14:12]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证 ownership 和个人贡献", "label": "inference", "confidence": "high"}, "competencies": ["Ownership"]},
+    {"id": "Q02.7", "parent_id": "Q02", "speaker": "Interviewer", "surface_question": "如果重做会怎么做", "canonical_question": "如果重做会改变什么", "answer_anchor": "[00:14:26–00:15:15]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证反思与迭代", "label": "inference", "confidence": "high"}, "competencies": ["Experiment Design", "Reflection"]},
+    {"id": "Q03", "parent_id": null, "speaker": "Interviewer", "surface_question": "怎么提高 AI 写作第一次生成成功率", "canonical_question": "如何提高 AI 产品 First Success", "answer_anchor": "[00:15:29–00:16:32]", "type": "root", "parent_confidence": "not-applicable", "underlying_intent": {"statement": "验证 AI 产品机制深度", "label": "inference", "confidence": "high"}, "competencies": ["AI-native Product Thinking", "Model Evaluation"]},
+    {"id": "Q03.1", "parent_id": "Q03", "speaker": "Interviewer", "surface_question": "成功怎么定义，失败怎么 recovery", "canonical_question": "AI 成功指标与 failure recovery", "answer_anchor": "[00:16:46–00:17:20]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证 evaluation 与恢复机制", "label": "inference", "confidence": "high"}, "competencies": ["Model Evaluation", "Failure Recovery"]},
+    {"id": "Q04", "parent_id": null, "speaker": "Interviewer", "surface_question": "D7 留存下降会做什么增长策略", "canonical_question": "如何诊断并改善 D7 Retention", "answer_anchor": "[00:17:35–00:18:28]", "type": "root", "parent_confidence": "not-applicable", "underlying_intent": {"statement": "验证增长机制而非 tactic 列表", "label": "inference", "confidence": "high"}, "competencies": ["Retention", "Growth Loop"]},
+    {"id": "Q04.1", "parent_id": "Q04", "speaker": "Interviewer", "surface_question": "用户为什么回来，retention driver 是什么", "canonical_question": "Retention driver 是什么", "answer_anchor": "[00:18:39–00:19:16]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证持续价值与习惯机制", "label": "inference", "confidence": "high"}, "competencies": ["Retention", "User Insight"]},
+    {"id": "Q05", "parent_id": null, "speaker": "Candidate", "surface_question": "团队核心目标和岗位负责什么", "canonical_question": "团队核心目标与岗位职责", "answer_anchor": "[00:19:41–00:20:48]", "type": "candidate-reverse-question", "parent_confidence": "not-applicable", "underlying_intent": null, "competencies": []}
+  ],
+  "key_answer_reviews": [
+    {
+      "question_id": "Q02.4.1",
+      "evidence": [{"anchor": "[00:10:26–00:11:18]", "speaker": "Candidate", "quote": "全量上线，没有做 A/B……我觉得主要就是这个功能带来的", "level": "F1", "confidence": "high"}],
+      "scores": {"substance": 5, "structure": 6, "relevance": 7, "credibility": 3, "differentiation": 3},
+      "weight_profile": "Data / Experiment / Attribution",
+      "overall_score": 4.6,
+      "gap_type": "Evidence",
+      "root_causes": ["RC-CAUSAL-LEAP", "RC-NO-VALIDATION"],
+      "recommended_structure": ["先承认全量上线无法严格归因", "列出可排除的替代解释", "说明下一次 A/B 与 guardrail 设计"],
+      "suggested_answer": "这次全量上线只能说明 D1 与上线同期上涨，不能严格证明因果。[这里需要补充：同期活动、渠道与版本变化]。如果重做，我会用 A/B，并同时观察 D1、D7 和付费 guardrail。",
+      "provenance": ["[00:10:26–00:11:18]", "[00:14:26–00:15:15]"]
+    },
+    {
+      "question_id": "Q03",
+      "evidence": [{"anchor": "[00:15:29–00:16:32]", "speaker": "Candidate", "quote": "AI 产品首先要解决真实用户问题……优化输入框和引导……换更好的模型", "level": "F1", "confidence": "high"}],
+      "scores": {"substance": 4, "structure": 6, "relevance": 6, "credibility": 5, "differentiation": 3},
+      "weight_profile": "AI Product Mechanism",
+      "overall_score": 4.7,
+      "gap_type": "Knowledge",
+      "root_causes": ["RC-AI-CONCEPTUAL", "RC-AI-NO-EVAL"],
+      "recommended_structure": ["定义 First Success", "拆解 intent-input-generation-evaluation", "设计 retry/edit/fallback 指标"],
+      "suggested_answer": "我会先把第一次生成成功定义为[这里需要补充：用户行为与质量标准]，再拆解输入完整度、生成质量、重试和编辑成本。现有材料没有具体 evaluation 或 failure recovery 经验，不能补写。",
+      "provenance": ["[00:15:29–00:17:20]"]
+    },
+    {
+      "question_id": "Q04",
+      "evidence": [{"anchor": "[00:17:35–00:19:16]", "speaker": "Candidate", "quote": "发 Push……签到、积分和邀请好友……主要还是有奖励，还有 AI 比较新鲜", "level": "F1", "confidence": "high"}],
+      "scores": {"substance": 4, "structure": 5, "relevance": 5, "credibility": 4, "differentiation": 3},
+      "weight_profile": "Growth Strategy",
+      "overall_score": 4.2,
+      "gap_type": "Capability",
+      "root_causes": ["RC-GROWTH-TACTIC", "RC-GROWTH-NO-LOOP"],
+      "recommended_structure": ["先定位 D7 下滑 segment 和行为断点", "提出 retention driver 假设", "再选 trigger/tactic 并设计增量实验"],
+      "suggested_answer": "我不会先默认用 Push 或积分，而会先按[这里需要补充：用户分群]定位 D7 前没有完成的核心价值行为，再验证 retention driver。当前 Transcript 没有该 AI 产品真实用户数据，因此这里只能给分析结构。",
+      "provenance": ["[00:17:35–00:19:16]"]
+    }
+  ],
+  "competency_observations": [
+    {"competency": "Attribution", "score": 4, "confidence": "high", "question_id": "Q02.4.1", "evidence_anchor": "[00:10:26–00:11:18]"},
+    {"competency": "AI Product", "score": 5, "confidence": "high", "question_id": "Q03", "evidence_anchor": "[00:15:29–00:17:20]"},
+    {"competency": "Growth", "score": 4, "confidence": "high", "question_id": "Q04", "evidence_anchor": "[00:17:35–00:19:16]"}
+  ],
+  "shortcoming_cards": [
+    {"name": "项目 Attribution 不成立", "severity": "High", "frequency": 2, "evidence": [{"anchor": "[00:10:26–00:11:18]", "speaker": "Candidate", "quote": "全量上线……主要就是这个功能带来的", "level": "F1", "confidence": "high"}], "root_cause": "RC-CAUSAL-LEAP", "interview_risk": "可能被推断为无法区分相关与因果", "corrective_principle": "先讲证据边界，再讲归因假设", "drill": "用 90 秒回答全量上线如何做归因；必须列 3 个 confounder 和一个可执行验证"},
+    {"name": "AI Product Depth 停留在口号", "severity": "High", "frequency": 2, "evidence": [{"anchor": "[00:15:29–00:17:20]", "speaker": "Candidate", "quote": "成功就是用户觉得好用", "level": "F1", "confidence": "high"}], "root_cause": "RC-AI-NO-EVAL", "interview_risk": "可能被推断为缺少 AI product mechanism", "corrective_principle": "每个 AI 答案必须落到 intent、eval、failure 和 trade-off", "drill": "为 AI 写作准备 First Success 指标树和 5 类 failure taxonomy"},
+    {"name": "Growth 回答 tactic 化", "severity": "High", "frequency": 2, "evidence": [{"anchor": "[00:17:35–00:19:16]", "speaker": "Candidate", "quote": "Push、签到、积分和邀请好友", "level": "F1", "confidence": "high"}], "root_cause": "RC-GROWTH-TACTIC", "interview_risk": "可能被推断为只会运营手段，不理解 retention driver", "corrective_principle": "先机制与分群，后触达手段", "drill": "按 Motivation→Value→Habit→Retention 重答 Q04，禁用 Push/补贴作为首句"}
+  ],
+  "anti_patterns": [
+    {"name": "结论后置/背景过长", "count": 1, "eligible_answers": 8, "evidence_anchors": ["[00:01:13–00:03:25]"]},
+    {"name": "数据无 evidence", "count": 3, "eligible_answers": 8, "evidence_anchors": ["[00:07:17–00:08:02]", "[00:10:26–00:11:18]", "[00:12:42–00:13:18]"]},
+    {"name": "AI 回答空泛", "count": 2, "eligible_answers": 2, "evidence_anchors": ["[00:15:29–00:17:20]"]},
+    {"name": "Growth 回答变运营", "count": 2, "eligible_answers": 2, "evidence_anchors": ["[00:17:35–00:19:16]"]}
+  ],
+  "projects": [
+    {"project_id": "chenguang-new-user-activation", "name": "晨光阅读新用户激活", "current_probe_depth": 3, "first_weak_layer": 4, "layers": [
+      {"layer": 1, "status": "Strong", "evidence_anchor": "[00:03:36–00:05:10]"},
+      {"layer": 2, "status": "Partial", "evidence_anchor": "[00:05:21–00:07:08]"},
+      {"layer": 3, "status": "Partial", "evidence_anchor": "[00:07:17–00:08:02]"},
+      {"layer": 4, "status": "Missing", "evidence_anchor": "[00:08:14–00:09:05]"},
+      {"layer": 5, "status": "Missing", "evidence_anchor": "[00:08:14–00:09:05]"},
+      {"layer": 6, "status": "Partial", "evidence_anchor": "[00:09:16–00:10:12]"},
+      {"layer": 7, "status": "Strong", "evidence_anchor": "[00:11:31–00:12:28]"},
+      {"layer": 8, "status": "Missing", "evidence_anchor": "[00:12:42–00:13:18]"},
+      {"layer": 9, "status": "Partial", "evidence_anchor": "[00:14:26–00:15:15]"},
+      {"layer": 10, "status": "Partial", "evidence_anchor": "[00:14:26–00:15:15]"}
+    ]}
+  ],
+  "story_candidates": [
+    {"story_id": "chenguang-data-anomaly", "title": "新手任务上线后的留存与付费异常", "type": "Data", "source_question_ids": ["Q02.5", "Q02.5.1"], "evidence_status": "incomplete", "missing_facts": ["付费下降分群与显著性", "奖励机制的验证"]}
+  ],
+  "reverse_interview": {
+    "candidate_questions": [{"question_id": "Q05", "question": "团队核心目标和岗位负责什么", "anchor": "[00:19:28–00:19:40]"}],
+    "facts": [
+      {"anchor": "[00:19:41–00:20:48]", "speaker": "Interviewer", "quote": "北极星还是创作 DAU……当前更具体的问题是新用户第一次生成成功率和 D7", "level": "F1", "confidence": "high"},
+      {"anchor": "[00:19:41–00:20:48]", "speaker": "Interviewer", "quote": "参与 onboarding、站内导流和生命周期实验，也要和算法一起定义生成质量评估", "level": "F1", "confidence": "high"}
+    ],
+    "inferences": [{"statement": "岗位需要增长漏斗与 AI 创作链路的复合能力", "label": "inference", "confidence": "high", "evidence_anchor": "[00:19:41–00:20:48]"}]
+  },
+  "shadow_jd": [
+    {"statement": "团队实际需要能改善 First Success 与 D7、并与算法共同定义生成质量评估的 AI Growth PM", "evidence_anchors": ["[00:19:41–00:20:48]"], "confidence": "high", "label": "inference"}
+  ],
+  "verdict": {
+    "overall_performance": 5.1,
+    "confidence": "High",
+    "strongest_areas": ["能识别项目异常数据", "反问直接获取岗位核心目标"],
+    "biggest_risks": ["Attribution 证据链薄弱", "AI Product mechanism 不足", "Growth 回答 tactic 化"],
+    "uncertain_areas": ["真实执行速度和跨团队协作质量无法从本 Transcript 判断"],
+    "created_at": "2099-01-15T12:00:00+00:00"
+  },
+  "outcome": null
+}
