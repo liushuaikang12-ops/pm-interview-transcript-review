@@ -2,6 +2,22 @@
 
 > Source Manifest：列出 Transcript / JD / Resume / Project Docs / History / Outcome。所有推断显式写“推断”。
 
+# 0. 实录与回答建议（前置）
+
+> 默认先输出，再进入 16 章诊断。逐条来自 Transcript；转写错误要修正并标注（音近专有名词、模型名无法确认处标「录音转写不清」）。
+
+## 实录（Question Transcript）
+
+面试官：<问题原文>
+[追问] 面试官：<追问原文>
+候选人：<回复>
+
+## 回答建议（Better Answer）
+
+> 只使用 Transcript/简历/JD 已有事实，缺口写 `[这里需要补充：…]`，假设题标「建议/假设」。每个回答建议做 provenance check。
+
+**回答建议**：<Better Answer>
+
 # 1. Executive Summary
 
 > 一段锋利结论：最大优势、最大风险、下一层追问最可能断在哪里。至少 2 个 Evidence anchors。禁止套话。

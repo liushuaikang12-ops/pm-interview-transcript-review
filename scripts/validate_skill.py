@@ -258,7 +258,7 @@ def main() -> None:
     check(readme_chapters == expected_chapters, "README must document exactly the ordered 16 chapters", errors)
 
     template = (ROOT / "templates/full-review.md").read_text(encoding="utf-8")
-    template_chapters = re.findall(r"^#\s+(\d{1,2})\.\s+(.+?)\s*$", template, flags=re.MULTILINE)
+    template_chapters = re.findall(r"^#\s+([1-9]\d*)\.\s+(.+?)\s*$", template, flags=re.MULTILINE)
     check(template_chapters == expected_chapters, "full-review template must contain exactly the ordered 16 chapters", errors)
 
     for script in ("install_skill.py", "interview_os.py", "transcribe_media.py", "render_review.py", "validate_skill.py"):
@@ -592,7 +592,7 @@ def main() -> None:
     expected = ROOT / "examples/test-run-output.md"
     if expected.exists():
         text = expected.read_text(encoding="utf-8-sig")
-        sample_chapters = re.findall(r"^#\s+(\d{1,2})\.\s+(.+?)\s*$", text, flags=re.MULTILINE)
+        sample_chapters = re.findall(r"^#\s+([1-9]\d*)\.\s+(.+?)\s*$", text, flags=re.MULTILINE)
         check(sample_chapters == expected_chapters, "test-run output must contain exactly the ordered 16 chapters", errors)
         check("Q02.2.1" in text and "Q02.4.1" in text and "Q02.5.1" in text, "test-run output missing nested follow-up", errors)
         check("推断" in text and "Evidence" in text, "test-run output lacks fact/inference or evidence labeling", errors)

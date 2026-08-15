@@ -167,9 +167,9 @@ export PM_INTERVIEW_REVIEW_HOME=/path/to/private/workspace
 
 ## Full Review 的内容与 16 章结构
 
-### 可选前置：Question Transcript
+### 默认前置：实录（Question Transcript）与回答建议（Better Answer）
 
-在诊断报告之前放一份可快速回看的问答实录：
+Full Review 默认在诊断报告之前，先输出「面试官问题原文 + 追问 + 回复」的实录，以及每个问题的「回答建议」（Better Answer，只使用已有事实、缺口用占位符）。实录示例：
 
 ```text
 Q01 面试官原始问题
@@ -362,7 +362,7 @@ Shadow JD 不复述职位描述，而是回答：实际工作重心是什么、�
 
 | Mode | 主要产出 | 适用场景 |
 |---|---|---|
-| A — Full Review | Question Transcript + 16 章 + 结构化记录 | 默认；完整复盘 |
+| A — Full Review | 实录 + 回答建议 + 16 章 + 结构化记录 | 默认；完整复盘 |
 | B — Question Extraction | Complete Question Map、Follow-up Trees、Intent、Competency | 只整理面经和追问结构 |
 | C — Answer Critique | 关键回答评分、Root Cause、Better Answer、Shortcoming Cards | 集中修回答 |
 | D — Interviewer Intelligence | Interviewer Signals、Reverse Interview、Shadow JD | 判断岗位真实需求 |
