@@ -52,8 +52,11 @@ Validated:
 - unique Q IDs, valid parents and nested Follow-up Trees；
 - five-dimensional scores, Evidence, 3–7 Shortcoming Cards and Shadow JD grounding；
 - 16-chapter sample output and Atomic Claim regression；
-- actual installation output exactly matches the 23-file package allowlist；
+- `PACKAGE_FILES` exactly matches an independent immutable 23-file release contract；
+- actual installation output exactly matches that 23-file package allowlist；
 - regression fixture confirms that an untracked `.env` and private interview transcript are not copied；
+- Windows fixtures reject source-ancestor, destination-ancestor and direct-destination Junctions; a direct source-file Symlink is also rejected where the platform permits creating one；
+- simulated staging-copy and post-backup rename failures preserve the previous `--force` installation and leave no temporary directories；
 - `PM_INTERVIEW_REVIEW_HOME` override is honored。
 
 ## 3. Installer Matrix
@@ -71,7 +74,7 @@ User-scope dry runs passed for:
 
 Project-scope dry runs passed for `.agents/skills`、`.claude/skills`、`.cursor/skills`、`.gemini/skills` 和 `.opencode/skills`。`--target` was also exercised by the installer smoke test in a temporary directory.
 
-The installer refuses to overwrite an existing target unless `--force` is supplied, refuses symbolic-link, Windows junction/reparse-point and non-directory targets, rejects recursive installation inside its own source repository even when an ancestor junction resolves back into the source, and copies only its explicit package allowlist. Extra files—including `.env` files and private transcripts—are excluded by construction rather than by a fragile ignore list.
+The installer refuses to overwrite an existing target unless `--force` is supplied, rejects symbolic links and Windows junction/reparse points in every traversed source or destination path component, rejects non-directory targets and recursive installation inside its own source repository, and copies only its explicit package allowlist. It stages beside the destination before replacement, so a staging copy failure leaves the previous installation intact. Extra files—including `.env` files and private transcripts—are excluded by construction rather than by a fragile ignore list.
 
 ## 4. Real Client Discovery Tests
 

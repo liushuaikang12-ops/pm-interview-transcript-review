@@ -152,7 +152,8 @@ python scripts/install_skill.py --agent universal --scope user --dry-run
 │   ├── anti-patterns.json              # 反模式统计
 │   ├── project-probe-depth.json        # 项目深挖层级
 │   ├── story-bank.json                 # 可复用故事索引
-│   └── calibration.json                # 预测与真实结果校准
+│   ├── calibration.json                # 预测与真实结果校准
+│   └── summary.json                    # 当前聚合规模与最近重建时间
 └── calibration-events.jsonl            # append-only 结果事件
 ```
 
@@ -211,7 +212,7 @@ Q01 面试官原始问题
 | Answer Anchor | 候选人回答所在位置 |
 | Underlying Intent | 考察意图，显式标记为推断 |
 | Competency | 主要能力标签，最多 1–3 个 |
-| Type | Root、Follow-up、Challenge、Administrative 等 |
+| Type | Root、Follow-up、Administrative、Candidate-reverse-question |
 
 报告会对账：原始抽取问题数、树节点数、流程问题数和 parent 不确定数。
 
@@ -435,7 +436,7 @@ python scripts/validate_skill.py
 - 五维评分、Evidence、Shortcoming Cards、Shadow JD；
 - 16 章输出；
 - Atomic Claim / negative-entailment 防编造回归；
-- 跨平台安装目标与自定义目录安装。
+- 跨平台安装目标、自定义目录安装、23 文件白名单及 Symlink/Junction 路径组件拒绝。
 
 完整模拟输入、Markdown/HTML 输出和测试记录位于 `examples/` 与 `references/test-report.md`。
 

@@ -8,6 +8,8 @@ import os
 import py_compile
 import re
 import shutil
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -36,6 +38,33 @@ REQUIRED_FILES = [
     "examples/simulated-record.json",
     "examples/test-run-output.html",
 ]
+EXPECTED_PACKAGE_FILES = frozenset(
+    {
+        "SKILL.md",
+        "README.md",
+        "LICENSE",
+        "scripts/install_skill.py",
+        "scripts/interview_os.py",
+        "scripts/transcribe_media.py",
+        "scripts/render_review.py",
+        "scripts/validate_skill.py",
+        "templates/full-review.md",
+        "templates/interview-record.schema.json",
+        "references/external-design-notes.md",
+        "references/history-and-calibration.md",
+        "references/media-pipeline.md",
+        "references/pm-competency-taxonomy.md",
+        "references/scoring-and-diagnosis.md",
+        "references/test-report.md",
+        "examples/atomic-claim-regression.md",
+        "examples/simulated-jd.md",
+        "examples/simulated-record.json",
+        "examples/simulated-resume.md",
+        "examples/simulated-transcript.md",
+        "examples/test-run-output.html",
+        "examples/test-run-output.md",
+    }
+)
 STANDARD_FRONTMATTER_FIELDS = {
     "name",
     "description",
@@ -92,6 +121,83 @@ def parse_frontmatter(skill: str, errors: list[str]) -> dict:
     return frontmatter if isinstance(frontmatter, dict) else {}
 
 
+def validate_frontmatter_mapping(frontmatter: dict, directory_name: str, errors: list[str]) -> None:
+    name = frontmatter.get("name")
+    check(name == directory_name, "frontmatter name must match the skill directory", errors)
+    check(
+        isinstance(name, str)
+        and 1 <= len(name) <= 64
+        and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name) is not None,
+        "name must be 1-64 lowercase alphanumeric characters separated by single hyphens",
+        errors,
+    )
+    description = frontmatter.get("description", "")
+    check(isinstance(description, str) and 1 <= len(description) <= 1024, "description must be 1-1024 characters", errors)
+    check(
+        isinstance(description, str)
+        and "interview" in description.lower()
+        and "product manager" in description.lower(),
+        "description lacks routing keywords",
+        errors,
+    )
+    compatibility = frontmatter.get("compatibility", "")
+    check(isinstance(compatibility, str) and 1 <= len(compatibility) <= 500, "compatibility must be a 1-500 character string", errors)
+    check(frontmatter.get("license") == "MIT", "license must be MIT", errors)
+    check(set(frontmatter).issubset(STANDARD_FRONTMATTER_FIELDS), "frontmatter contains non-standard top-level fields", errors)
+    metadata = frontmatter.get("metadata", {})
+    check(
+        isinstance(metadata, dict)
+        and all(isinstance(k, str) and isinstance(v, str) for k, v in metadata.items()),
+        "metadata must map strings to strings for Agent Skills portability",
+        errors,
+    )
+
+
+def make_directory_link(link: Path, target: Path) -> None:
+    if os.name == "nt":
+        result = subprocess.run(
+            ["cmd.exe", "/c", "mklink", "/J", str(link), str(target)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+        if result.returncode != 0:
+            raise OSError(result.stderr.decode(errors="replace"))
+    else:
+        link.symlink_to(target, target_is_directory=True)
+
+
+def remove_directory_link(link: Path) -> None:
+    if not link.exists() and not link.is_symlink():
+        return
+    if os.name == "nt":
+        os.rmdir(link)
+    else:
+        link.unlink()
+
+
+def make_file_link(link: Path, target: Path) -> bool:
+    try:
+        if os.name == "nt":
+            result = subprocess.run(
+                ["cmd.exe", "/c", "mklink", str(link), str(target)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            return result.returncode == 0
+        link.symlink_to(target)
+        return True
+    except OSError:
+        return False
+
+
+def copy_package(source_root: Path, destination_root: Path, package_files: tuple[str, ...]) -> None:
+    for relative in package_files:
+        source = source_root / relative
+        destination = destination_root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+
+
 def main() -> None:
     errors: list[str] = []
     for rel in REQUIRED_FILES:
@@ -102,30 +208,20 @@ def main() -> None:
     check(starts_with_fence and not raw_skill.startswith(b"\xef\xbb\xbf"), "SKILL.md must start with --- at byte 0 and use UTF-8 without BOM", errors)
     skill = raw_skill.decode("utf-8")
     frontmatter = parse_frontmatter(skill, errors)
-    if frontmatter:
-        name = frontmatter.get("name")
-        check(name == ROOT.name, "frontmatter name must match the skill directory", errors)
-        check(
-            isinstance(name, str)
-            and 1 <= len(name) <= 64
-            and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name) is not None,
-            "name must be 1-64 lowercase alphanumeric characters separated by single hyphens",
-            errors,
-        )
-        description = frontmatter.get("description", "")
-        check(isinstance(description, str) and 1 <= len(description) <= 1024, "description must be 1-1024 characters", errors)
-        check("interview" in description.lower() and "product manager" in description.lower(), "description lacks routing keywords", errors)
-        compatibility = frontmatter.get("compatibility", "")
-        check(isinstance(compatibility, str) and 1 <= len(compatibility) <= 500, "compatibility must be a 1-500 character string", errors)
-        check(frontmatter.get("license") == "MIT", "license must be MIT", errors)
-        check(set(frontmatter).issubset(STANDARD_FRONTMATTER_FIELDS), "frontmatter contains non-standard top-level fields", errors)
-        metadata = frontmatter.get("metadata", {})
-        check(
-            isinstance(metadata, dict)
-            and all(isinstance(k, str) and isinstance(v, str) for k, v in metadata.items()),
-            "metadata must map strings to strings for Agent Skills portability",
-            errors,
-        )
+    validate_frontmatter_mapping(frontmatter, ROOT.name, errors)
+
+    valid_fixture = dict(frontmatter)
+    negative_frontmatter_fixtures = {
+        "empty mapping": ({}, ROOT.name),
+        "double-hyphen name": ({**valid_fixture, "name": "bad--name"}, "bad--name"),
+        "nested metadata": ({**valid_fixture, "metadata": {"author": {"name": "nested"}}}, ROOT.name),
+    }
+    for label, (fixture, directory_name) in negative_frontmatter_fixtures.items():
+        fixture_errors: list[str] = []
+        validate_frontmatter_mapping(fixture, directory_name, fixture_errors)
+        check(bool(fixture_errors), f"negative frontmatter fixture was accepted: {label}", errors)
+    bom_fixture = b"\xef\xbb\xbf" + raw_skill
+    check(not bom_fixture.startswith(b"---"), "negative frontmatter fixture was accepted: UTF-8 BOM", errors)
     check(len(skill) <= 100_000, "SKILL.md exceeds the 100,000-character portability budget", errors)
     check(len(skill.splitlines()) <= 500, "SKILL.md exceeds the 500-line progressive-disclosure budget", errors)
     for section in (
@@ -173,6 +269,11 @@ def main() -> None:
 
     installer = load_module(ROOT / "scripts" / "install_skill.py", "install_skill_under_test")
     package_files = set(installer.PACKAGE_FILES)
+    check(
+        len(installer.PACKAGE_FILES) == 23 and package_files == EXPECTED_PACKAGE_FILES,
+        "installer PACKAGE_FILES must match the immutable 23-file release contract exactly",
+        errors,
+    )
     check(len(package_files) == len(installer.PACKAGE_FILES), "installer package allowlist contains duplicates", errors)
     check(set(REQUIRED_FILES).issubset(package_files), "installer package allowlist omits required files", errors)
     check(
@@ -181,7 +282,68 @@ def main() -> None:
         errors,
     )
     with tempfile.TemporaryDirectory(prefix="pm-review-installer-test-") as temp:
-        destination = Path(temp) / "skills" / installer.SKILL_NAME
+        temp_path = Path(temp)
+        parser = installer.build_parser()
+        for agent in installer.SUPPORTED_AGENTS:
+            user_args = parser.parse_args(["--agent", agent, "--scope", "user"])
+            check(
+                installer.resolve_destination(user_args)
+                == installer.user_root(agent).expanduser().absolute() / installer.SKILL_NAME,
+                f"wrong user-scope destination for {agent}",
+                errors,
+            )
+            if agent != "hermes":
+                project_dir = temp_path / f"project-{agent}"
+                project_args = parser.parse_args(
+                    ["--agent", agent, "--scope", "project", "--project-dir", str(project_dir)]
+                )
+                check(
+                    installer.resolve_destination(project_args)
+                    == installer.project_root(agent, project_dir.absolute()).absolute() / installer.SKILL_NAME,
+                    f"wrong project-scope destination for {agent}",
+                    errors,
+                )
+
+        custom_root = temp_path / "custom-target"
+        custom_result = subprocess.run(
+            [sys.executable, str(ROOT / "scripts/install_skill.py"), "--target", str(custom_root)],
+            cwd=ROOT,
+            text=True,
+            encoding="utf-8",
+            capture_output=True,
+        )
+        check(custom_result.returncode == 0, "installer --target execution failed", errors)
+        check(
+            (custom_root / installer.SKILL_NAME / "SKILL.md").is_file(),
+            "installer --target did not create the expected skill directory",
+            errors,
+        )
+        hermes_project_result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/install_skill.py"),
+                "--agent",
+                "hermes",
+                "--scope",
+                "project",
+                "--project-dir",
+                str(temp_path),
+                "--dry-run",
+            ],
+            cwd=ROOT,
+            text=True,
+            encoding="utf-8",
+            capture_output=True,
+        )
+        check(
+            hermes_project_result.returncode == 2
+            and "Traceback" not in hermes_project_result.stderr
+            and "project-scope discovery is not assumed" in hermes_project_result.stderr,
+            "unsupported Hermes project scope did not produce a clean argparse error",
+            errors,
+        )
+
+        destination = temp_path / "skills" / installer.SKILL_NAME
         try:
             installer.install(destination, force=False)
             check((destination / "SKILL.md").is_file(), "installer did not copy SKILL.md", errors)
@@ -240,6 +402,137 @@ def main() -> None:
                 )
             finally:
                 installer.SOURCE_ROOT = original_source_root
+
+            rollback_destination = temp_path / "rollback" / installer.SKILL_NAME
+            installer.install(rollback_destination, force=False)
+            rollback_marker = rollback_destination / "keep-me.txt"
+            rollback_marker.write_text("existing installation", encoding="utf-8")
+            original_copy2 = installer.shutil.copy2
+            try:
+                installer.shutil.copy2 = lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                    OSError("simulated staging copy failure")
+                )
+                try:
+                    installer.install(rollback_destination, force=True)
+                    errors.append("installer did not surface a simulated staging copy failure")
+                except OSError:
+                    pass
+            finally:
+                installer.shutil.copy2 = original_copy2
+            check(
+                rollback_marker.is_file(),
+                "installer --force removed the working installation after a staging copy failure",
+                errors,
+            )
+
+            destination_path_class = type(rollback_destination)
+            original_replace = destination_path_class.replace
+
+            def fail_staged_swap(path: Path, target: Path) -> Path:
+                if path.name.startswith(f".{installer.SKILL_NAME}.staged-") and Path(target).name == installer.SKILL_NAME:
+                    raise OSError("simulated post-backup staged rename failure")
+                return original_replace(path, target)
+
+            try:
+                destination_path_class.replace = fail_staged_swap
+                try:
+                    installer.install(rollback_destination, force=True)
+                    errors.append("installer did not surface a simulated staged rename failure")
+                except OSError:
+                    pass
+            finally:
+                destination_path_class.replace = original_replace
+            check(
+                rollback_marker.is_file(),
+                "installer --force did not restore the previous installation after a staged rename failure",
+                errors,
+            )
+            rollback_leftovers = [
+                path
+                for path in rollback_destination.parent.iterdir()
+                if path.name.startswith(f".{installer.SKILL_NAME}.")
+            ]
+            check(not rollback_leftovers, "installer left staging or backup directories after rollback", errors)
+
+            junction_source = temp_path / "source-ancestor-junction"
+            copy_package(ROOT, junction_source, installer.PACKAGE_FILES)
+            redirected_examples = junction_source / "redirected-examples"
+            (junction_source / "examples").replace(redirected_examples)
+            source_examples_link = junction_source / "examples"
+            make_directory_link(source_examples_link, redirected_examples)
+            try:
+                installer.SOURCE_ROOT = junction_source
+                try:
+                    installer.install(temp_path / "source-junction-output" / installer.SKILL_NAME, force=False)
+                    errors.append("installer accepted a source ancestor symlink/junction")
+                except SystemExit:
+                    pass
+            finally:
+                installer.SOURCE_ROOT = original_source_root
+                remove_directory_link(source_examples_link)
+
+            direct_source = temp_path / "source-direct-link"
+            copy_package(ROOT, direct_source, installer.PACKAGE_FILES)
+            direct_source_file = direct_source / "SKILL.md"
+            direct_source_file.unlink()
+            direct_source_link_created = make_file_link(direct_source_file, direct_source / "README.md")
+            if direct_source_link_created:
+                try:
+                    installer.SOURCE_ROOT = direct_source
+                    try:
+                        installer.install(temp_path / "direct-source-output" / installer.SKILL_NAME, force=False)
+                        errors.append("installer accepted a direct source symlink")
+                    except SystemExit:
+                        pass
+                finally:
+                    installer.SOURCE_ROOT = original_source_root
+                    direct_source_file.unlink(missing_ok=True)
+
+            real_destination_parent = temp_path / "real-destination-parent"
+            real_destination_parent.mkdir()
+            linked_destination_parent = temp_path / "linked-destination-parent"
+            make_directory_link(linked_destination_parent, real_destination_parent)
+            try:
+                try:
+                    installer.install(linked_destination_parent / installer.SKILL_NAME, force=False)
+                    errors.append("installer accepted a destination ancestor symlink/junction")
+                except SystemExit:
+                    pass
+                linked_target_result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(ROOT / "scripts/install_skill.py"),
+                        "--target",
+                        str(linked_destination_parent),
+                    ],
+                    cwd=ROOT,
+                    text=True,
+                    encoding="utf-8",
+                    capture_output=True,
+                )
+                check(
+                    linked_target_result.returncode != 0
+                    and not (real_destination_parent / installer.SKILL_NAME).exists(),
+                    "installer CLI accepted a --target ancestor symlink/junction",
+                    errors,
+                )
+            finally:
+                remove_directory_link(linked_destination_parent)
+
+            direct_destination_target = temp_path / "direct-destination-target"
+            direct_destination_target.mkdir()
+            direct_destination_parent = temp_path / "direct-destination-parent"
+            direct_destination_parent.mkdir()
+            direct_destination_link = direct_destination_parent / installer.SKILL_NAME
+            make_directory_link(direct_destination_link, direct_destination_target)
+            try:
+                try:
+                    installer.install(direct_destination_link, force=True)
+                    errors.append("installer accepted a direct destination symlink/junction")
+                except SystemExit:
+                    pass
+            finally:
+                remove_directory_link(direct_destination_link)
         except Exception as exc:
             errors.append(f"portable installer smoke test failed: {exc}")
 

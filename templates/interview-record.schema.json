@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/liushuaikang12-ops/pm-interview-transcript-review/blob/main/templates/interview-record.schema.json",
+  "$id": "urn:pm-interview-transcript-review:interview-record:1.0",
   "title": "PM Interview Review OS — Interview Record",
   "type": "object",
   "required": [
