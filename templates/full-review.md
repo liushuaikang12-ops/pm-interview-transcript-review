@@ -119,7 +119,7 @@ PM Evidence Chain：Problem → Evidence → Insight → Decision → Solution �
 | Layer | Status | Evidence | Missing |
 |---:|---|---|---|
 
-# 11. AI PM / Growth PM Special Review
+# 11. Role-specific Review
 
 仅动态启用匹配模块；不匹配时写 `Not activated — 岗位/问题无足够证据`。
 
@@ -128,6 +128,9 @@ User Intent / Capability / Limitation / Context / Memory / Tool / Evaluation / A
 
 ## Growth Mechanism
 Motivation → Trigger → Activation → First Value → Habit → Retention → Growth Loop；补充 Segment、Lifecycle、Attribution、Guardrail。
+
+## Strategy Depth
+Business Model / Market / Competition / Resource Allocation / ROI / Trade-off / Execution loop。
 
 # 12. Interviewer Signals
 

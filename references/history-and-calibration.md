@@ -4,10 +4,10 @@
 
 单场记录是 source of truth；Question Bank、Competency Matrix、Anti-pattern、Probe Depth、Story Bank 都是可重建 projection。不要把计数散落在 Markdown 里手工维护。
 
-默认 workspace：
+默认 workspace（可通过 `PM_INTERVIEW_REVIEW_HOME` 覆盖）：
 
 ```text
-$HERMES_HOME/interview-review-os/
+~/.pm-interview-review-os/
 ├── config.json
 ├── interviews/
 │   └── <interview_id>/
@@ -151,7 +151,7 @@ python scripts/interview_os.py outcome --id <interview_id> --status rejected --f
 ## 10. Privacy / Deletion
 
 - 本地优先；不自动上传媒体、简历、Transcript、feedback。
-- 不把逐场内容写进 Mem0/MEMORY。
+- 不把逐场内容写进 Agent 的通用用户画像或长期个人记忆。
 - 删除一场：删除对应 interview directory 后运行 rebuild；报告聚合变化。
 - Outcome feedback 可能包含第三方个人信息；只保留复盘所需最小内容。
 - Workspace 备份与加密由用户自行选择；Skill 不宣称默认加密。

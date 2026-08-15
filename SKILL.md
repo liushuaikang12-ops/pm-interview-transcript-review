@@ -1,14 +1,11 @@
 ---
 name: pm-interview-transcript-review
-description: Use when reviewing PM interview recordings or transcripts.
-version: 1.0.0
-author: 刘帅康 & Hermes Agent
+description: Review Product Manager interview recordings or transcripts into evidence-grounded Follow-up Trees, answer diagnostics, Better Answers, Shadow JD, cross-interview trends, and next-round drills. Use for PM, AI PM, Growth PM, or Strategy PM interview debriefs; not for generic meeting summaries.
 license: MIT
-platforms: [windows, macos, linux]
+compatibility: Agent Skills open standard. Core workflow needs file reading and Markdown output; optional scripts need Python 3.10+, and local media transcription additionally needs ffmpeg plus faster-whisper.
 metadata:
-  hermes:
-    tags: [interview, product-manager, ai-pm, growth, transcript, coaching]
-    related_skills: [ocr-and-documents, resume-document-production]
+  author: liushuaikang12-ops
+  version: "2.0.0"
 ---
 
 # PM Interview Review OS
@@ -76,15 +73,16 @@ metadata:
 
 ### 0. Preflight 与工作区
 
-默认工作区为 `$HERMES_HOME/interview-review-os/`，不要把用户历史写进 Skill 安装目录。优先使用 Hermes 注入的 `${HERMES_SKILL_DIR}` 定位本 Skill；仅在变量不可用时使用 `skill_view` 返回的 `skill_dir`。运行：
+先从当前客户端提供的 Skill metadata、已加载文件路径或当前 `SKILL.md` 所在位置确定 **Skill directory**。所有 `references/...`、`templates/...` 和 `scripts/...` 都相对该目录解析；不要猜全局安装路径，也不要假设客户端提供某个厂商专属环境变量。
+
+默认历史工作区为 `${PM_INTERVIEW_REVIEW_HOME}`；未设置时，脚本使用用户目录下的 `~/.pm-interview-review-os/`。不要把面试材料和跨场历史写进 Skill 安装目录。需要确定性历史聚合时运行：
 
 ```bash
-SKILL_DIR="${HERMES_SKILL_DIR:-$HERMES_HOME/skills/productivity/pm-interview-transcript-review}"
-python "$SKILL_DIR/scripts/interview_os.py" init
-python "$SKILL_DIR/scripts/interview_os.py" status
+python "<skill-directory>/scripts/interview_os.py" init
+python "<skill-directory>/scripts/interview_os.py" status
 ```
 
-不要猜路径。先读取工作区历史索引；没有历史时明确写“无历史基线”，不要虚构趋势。完成条件：输入清单、模式、岗位类型、历史可用性均已记录。
+客户端没有 shell/Python 能力时，仍可完成基于当前输入的 Markdown 复盘，但必须把 History 标为 `Unavailable in this client`，不得声称已保存记录或更新跨场聚合。先读取工作区历史索引；没有历史时明确写“无历史基线”，不要虚构趋势。完成条件：输入清单、模式、岗位类型、Skill directory 和历史可用性均已记录。
 
 ### 1. Transcript Processing
 
@@ -250,7 +248,7 @@ Full Review 默认严格按 `templates/full-review.md` 的 16 章输出：
 8. Shortcoming Cards
 9. Anti-patterns
 10. Project Probe Depth
-11. AI PM / Growth PM Special Review（动态启用）
+11. Role-specific Review：AI PM / Growth PM / Strategy PM（动态启用）
 12. Interviewer Signals
 13. Reverse Interview Intelligence
 14. Shadow JD
@@ -271,9 +269,9 @@ Full Review 诊断之前，可在 Executive Summary 之前增加「面试官问�
 
 完整交付时，用户可能要求把「实录 + 回答建议 + 16 章诊断」整体写入外部文档（飞书等），不要只留工作区文件路径——用户在聊天平台看不到本地路径，务必把内容落地到用户能直接打开的载体。
 
-## Memory / History Behavior
+## History / Persistence Behavior
 
-- 过程性历史存 `$HERMES_HOME/interview-review-os/`，不写入 Mem0/MEMORY；Transcript、评分和结果会变，且可能包含敏感信息。
+- 过程性历史存 `${PM_INTERVIEW_REVIEW_HOME}`；未设置时使用 `~/.pm-interview-review-os/`。不要写入 Agent 的通用用户画像、长期个人记忆或 Skill 安装目录；Transcript、评分和结果会变，且可能包含敏感信息。
 - 每次先读历史索引，再分析当前场；历史只能用于趋势比较，不能预先给当前回答贴标签。
 - 记录层以单场 `record.json` 为事实源，聚合层可重建。
 - 最佳答案只能由用户事实构成；Story Bank 条目保存 source interview/Q&A 与 evidence status。

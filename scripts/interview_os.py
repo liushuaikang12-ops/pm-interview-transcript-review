@@ -30,8 +30,8 @@ def as_path(value: str | os.PathLike[str]) -> Path:
 
 
 def default_root() -> Path:
-    home = os.environ.get("HERMES_HOME")
-    return (as_path(home) if home else Path.home() / ".hermes") / "interview-review-os"
+    configured = os.environ.get("PM_INTERVIEW_REVIEW_HOME")
+    return as_path(configured) if configured else Path.home() / ".pm-interview-review-os"
 
 
 def read_json(path: Path) -> Any:

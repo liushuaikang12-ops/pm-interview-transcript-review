@@ -1,14 +1,14 @@
 # PM Interview Review — Full Review（验收自测）
 
-> **本文件为 Skill 验收自测产物，输入均为虚构测试数据，未写入真实历史工作区 `C:\hermes\interview-review-os`。** 所有推断显式写“推断”。
+> **本文件为 Skill 验收自测产物，输入均为虚构测试数据，未写入真实历史工作区 `~/.pm-interview-review-os/`。** 所有推断显式写“推断”。
 
 ## Source Manifest
 
 | source_id | 类型 | 路径 | 时间戳 | 语言 | 可信用途 |
 |---|---|---|---|---|---|
-| SRC-T | Transcript | references/examples/simulated-transcript.md | 有（00:00:05–00:21:00） | zh | 事实源（唯一事实源） |
-| SRC-J | JD | references/examples/simulated-jd.md | 无 | zh | 岗位匹配 / Shadow JD 校验 |
-| SRC-R | Resume | references/examples/simulated-resume.md | 无 | zh | 事实交叉校验（F2） |
+| SRC-T | Transcript | examples/simulated-transcript.md | 有（00:00:05–00:21:00） | zh | 事实源（唯一事实源） |
+| SRC-J | JD | examples/simulated-jd.md | 无 | zh | 岗位匹配 / Shadow JD 校验 |
+| SRC-R | Resume | examples/simulated-resume.md | 无 | zh | 事实交叉校验（F2） |
 | SRC-H | History | — | — | — | **无历史基线（首场）** |
 
 Speaker：单面试官；`Interviewer` / `Candidate`（陈辰）。Transcript 完整、带时间戳、speaker 可靠 → 本场 Confidence 取 **High**。
@@ -497,7 +497,7 @@ Q04 如果 D7 留存下降，你会做什么增长策略？
 
 ---
 
-# 11. AI PM / Growth PM Special Review
+# 11. Role-specific Review
 
 > 岗位为「AI 创作增长 PM」，AI Product 与 Growth 两个模块均启用。
 
@@ -533,6 +533,10 @@ Q04 如果 D7 留存下降，你会做什么增长策略？
 | Attribution / Guardrail | Missing | 无增量口径、无防补贴/作弊 |
 
 **结论：Growth 能力停留在 tactic 层**（Push/签到/积分/补贴），未通过 `Activation→Value→Retention→Loop` 机制测试，与面试官“不只是做活动”（[00:19:41]）的要求直接不符。
+
+## Strategy Depth
+
+`Not activated — 本场岗位与问题没有提供足够的 Strategy PM 证据。`
 
 ---
 
@@ -598,7 +602,7 @@ Q04 如果 D7 留存下降，你会做什么增长策略？
 # 15. Cross-interview Update
 
 - **History baseline：0 场（本场为验收自测首场，无历史基线）。**
-- **本场不写入真实历史工作区 `C:\hermes\interview-review-os`**；因此无 records 可重建聚合，不产生任何跨场趋势结论。
+- **本场不写入真实历史工作区 `~/.pm-interview-review-os/`**；因此无 records 可重建聚合，不产生任何跨场趋势结论。
 - **Question Bank changes**：无历史对比；本场 17 问（见 Chapter 3）可作未来题库的候选初始项，但本测试未持久化。
 - **Competency Matrix changes**：无历史；本场 observations 见 Chapter 5，仅为本场单点信号。
 - **Anti-pattern changes**：无历史；本场计数见 Chapter 9，一律 `Insufficient history`。

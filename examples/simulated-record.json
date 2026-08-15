@@ -10,9 +10,9 @@
     "role_types": ["AI PM", "Growth PM"]
   },
   "source_manifest": [
-    {"source_id": "S01", "type": "transcript", "location": "references/examples/simulated-transcript.md", "timestamped": true},
-    {"source_id": "S02", "type": "jd", "location": "references/examples/simulated-jd.md", "timestamped": false},
-    {"source_id": "S03", "type": "resume", "location": "references/examples/simulated-resume.md", "timestamped": false}
+    {"source_id": "S01", "type": "transcript", "location": "examples/simulated-transcript.md", "timestamped": true},
+    {"source_id": "S02", "type": "jd", "location": "examples/simulated-jd.md", "timestamped": false},
+    {"source_id": "S03", "type": "resume", "location": "examples/simulated-resume.md", "timestamped": false}
   ],
   "transcript": {"completeness": "full", "speaker_reliability": "high", "timestamp_reliability": "high", "asr_notes": "人工模拟文本"},
   "questions": [
