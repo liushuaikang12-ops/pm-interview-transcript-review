@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import tempfile
+import types
 import unittest
 import urllib.error
 from pathlib import Path
@@ -13,8 +14,16 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from codex_feishu_bridge import job_id, personal_codex_env  # noqa: E402
-from feishu_common import ConfigurationError, FeishuAPI, load_config, wiki_url  # noqa: E402
+from codex_feishu_bridge import find_codex, job_id, personal_codex_env, run_bridge  # noqa: E402
+from feishu_common import (  # noqa: E402
+    FIXED_TENANT_DOMAIN,
+    FIXED_WIKI_SPACE_ID,
+    ConfigurationError,
+    FeishuAPI,
+    feishu_config,
+    load_config,
+    wiki_url,
+)
 from publish_feishu_wiki import (  # noqa: E402
     append_blocks,
     create_wiki_node,
@@ -37,6 +46,29 @@ class FakeAPI:
         return {"code": 0, "data": {}}
 
 
+class PaginatedBlocksAPI:
+    def __init__(self) -> None:
+        self.paths: list[str] = []
+
+    def request(self, method: str, path: str, body=None):
+        if method != "GET" or body is not None:
+            raise AssertionError("unexpected request")
+        self.paths.append(path)
+        if "page_token=next%20page" in path:
+            return {
+                "code": 0,
+                "data": {"items": [{"block_id": "child-2"}], "has_more": False},
+            }
+        return {
+            "code": 0,
+            "data": {
+                "items": [{"block_id": "root"}, {"block_id": "child-1"}],
+                "has_more": True,
+                "page_token": "next page",
+            },
+        }
+
+
 class FakeResponse:
     def __init__(self, payload: dict[str, object]) -> None:
         self._raw = json.dumps(payload).encode("utf-8")
@@ -53,6 +85,52 @@ class FakeResponse:
 
 
 class FeishuAutomationTests(unittest.TestCase):
+    def test_windows_codex_lookup_falls_back_to_user_npm_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            npm = Path(folder) / "npm"
+            npm.mkdir()
+            expected = npm / "codex.cmd"
+            expected.write_text("@echo off\n", encoding="ascii")
+            with (
+                patch("codex_feishu_bridge.shutil.which", return_value=None),
+                patch.dict(os.environ, {"APPDATA": folder}),
+            ):
+                self.assertEqual(find_codex(), str(expected))
+
+    def test_bridge_starts_channel_without_nesting_an_event_loop(self) -> None:
+        calls: list[object] = []
+
+        class FakePolicyConfig:
+            def __init__(self, **kwargs):
+                calls.append(("policy", kwargs))
+
+        class FakeChannel:
+            def __init__(self, **kwargs):
+                calls.append(("channel", kwargs))
+
+            def on(self, name, handler):
+                calls.append(("on", name, callable(handler)))
+
+            def start(self):
+                calls.append("start")
+
+        fake_sdk = types.SimpleNamespace(
+            FeishuChannel=FakeChannel,
+            PolicyConfig=FakePolicyConfig,
+        )
+        config = {"feishu": {"dm_enabled": True, "allowed_chat_ids": []}}
+        with (
+            patch.dict(sys.modules, {"lark_channel": fake_sdk}),
+            patch("codex_feishu_bridge.load_config", return_value=config),
+            patch("codex_feishu_bridge.feishu_config", return_value=config["feishu"]),
+            patch("codex_feishu_bridge.require_feishu_credentials", return_value=("app", "secret")),
+            patch("codex_feishu_bridge.ensure_personal_codex", return_value=Path("codex")),
+        ):
+            run_bridge(None)
+
+        self.assertEqual(calls[-1], "start")
+        self.assertIn(("on", "message", True), calls)
+
     def test_markdown_conversion_uses_expected_block_types(self) -> None:
         blocks = markdown_to_blocks("# 标题\n\n- 列表\n\n1. 顺序\n\n> 引用\n\n```\ncode\n```\n")
         self.assertEqual([x["block_type"] for x in blocks], [3, 12, 13, 15, 14])
@@ -70,6 +148,15 @@ class FeishuAutomationTests(unittest.TestCase):
         self.assertEqual(sum(1 for method, path, _ in api.calls if method == "POST" and path.endswith("/children")), 2)
         self.assertEqual(verify_blocks(api, obj), 2)
         self.assertIn("spaces/spc%201/nodes", api.calls[0][1])
+
+    def test_block_verification_reads_every_page_and_checks_expected_count(self) -> None:
+        api = PaginatedBlocksAPI()
+        self.assertEqual(
+            verify_blocks(api, "doc id", expected_content_blocks=2),
+            3,
+        )
+        self.assertEqual(len(api.paths), 2)
+        self.assertIn("page_token=next%20page", api.paths[1])
 
     def test_config_rejects_persisted_secrets(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
@@ -103,6 +190,22 @@ class FeishuAutomationTests(unittest.TestCase):
 
     def test_wiki_url_requires_real_tenant_domain_input(self) -> None:
         self.assertEqual(wiki_url("example.feishu.cn", "wikcn_node"), "https://example.feishu.cn/wiki/wikcn_node")
+
+    def test_feishu_target_is_locked_to_the_organization_wiki(self) -> None:
+        expected = {
+            "tenant_domain": FIXED_TENANT_DOMAIN,
+            "space_id": FIXED_WIKI_SPACE_ID,
+        }
+        self.assertEqual(feishu_config({"feishu": expected}), expected)
+        with self.assertRaises(ConfigurationError):
+            feishu_config(
+                {
+                    "feishu": {
+                        "tenant_domain": FIXED_TENANT_DOMAIN,
+                        "space_id": "another-space",
+                    }
+                }
+            )
 
     @patch("feishu_common.time.sleep", return_value=None)
     def test_feishu_client_retries_rate_limit(self, _sleep) -> None:

@@ -6,16 +6,26 @@ import argparse
 import json
 from pathlib import Path
 
-from feishu_common import atomic_json, config_path, load_config
+from feishu_common import (
+    FIXED_TENANT_DOMAIN,
+    FIXED_WIKI_SPACE_ID,
+    atomic_json,
+    config_path,
+    load_config,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Configure a personal Codex runner that publishes to the organization Wiki"
     )
-    parser.add_argument("--space-id", required=True, help="fixed organization Wiki space_id")
+    parser.add_argument(
+        "--space-id", default=FIXED_WIKI_SPACE_ID, help="fixed organization Wiki space_id"
+    )
     parser.add_argument("--parent-node-token", default="", help="fixed Wiki parent node")
-    parser.add_argument("--tenant-domain", required=True, help="example.feishu.cn")
+    parser.add_argument(
+        "--tenant-domain", default=FIXED_TENANT_DOMAIN, help="fixed organization Feishu domain"
+    )
     parser.add_argument("--chat-id", action="append", default=[], help="allowed group chat_id; repeatable")
     parser.add_argument("--disable-dm", action="store_true", help="reject direct messages")
     parser.add_argument("--config", help="configuration destination")
@@ -25,6 +35,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    if args.tenant_domain.strip() != FIXED_TENANT_DOMAIN:
+        raise SystemExit(f"tenant domain is fixed to {FIXED_TENANT_DOMAIN}")
+    if args.space_id.strip() != FIXED_WIKI_SPACE_ID:
+        raise SystemExit(f"Wiki space is fixed to {FIXED_WIKI_SPACE_ID}")
     destination = config_path(args.config)
     existing = load_config(destination) if destination.exists() else {}
     config = {

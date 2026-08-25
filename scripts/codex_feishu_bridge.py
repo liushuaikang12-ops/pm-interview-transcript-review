@@ -35,8 +35,23 @@ def personal_codex_env() -> dict[str, str]:
     return env
 
 
-def ensure_personal_codex() -> str:
+def find_codex() -> str | None:
     codex = shutil.which("codex")
+    if codex or os.name != "nt":
+        return codex
+    candidates: list[Path] = []
+    appdata = os.environ.get("APPDATA", "").strip()
+    if appdata:
+        candidates.append(Path(appdata) / "npm" / "codex.cmd")
+    candidates.append(Path.home() / "AppData" / "Roaming" / "npm" / "codex.cmd")
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
+def ensure_personal_codex() -> str:
+    codex = find_codex()
     if not codex:
         raise ConfigurationError("codex not found on PATH")
     completed = subprocess.run(
@@ -162,7 +177,7 @@ def process_downloaded(
     )
 
 
-async def run_bridge(config_file: str | None) -> None:
+def run_bridge(config_file: str | None) -> None:
     try:
         from lark_channel import FeishuChannel, PolicyConfig
     except ImportError as exc:
@@ -277,7 +292,12 @@ async def run_bridge(config_file: str | None) -> None:
 
     channel.on("message", on_message)
     print("Codex Feishu bridge starting with personal ChatGPT login; secrets are redacted.")
-    await channel.connect()
+    # lark-channel's WebSocket client owns a module-level event loop. Calling
+    # the async ``connect()`` wrapper from ``asyncio.run()`` imports/starts the
+    # SDK while another loop is active and fails on Windows with
+    # "This event loop is already running". Start it synchronously; inbound
+    # async handlers are dispatched by the channel's own background loop.
+    channel.start()
 
 
 def main() -> None:
@@ -285,9 +305,24 @@ def main() -> None:
     parser.add_argument("--config")
     args = parser.parse_args()
     try:
-        asyncio.run(run_bridge(args.config))
+        run_bridge(args.config)
     except (ConfigurationError, KeyboardInterrupt) as exc:
         if isinstance(exc, ConfigurationError):
+            diagnostic = runtime_home() / "bridge-startup-error.json"
+            diagnostic.parent.mkdir(parents=True, exist_ok=True)
+            diagnostic.write_text(
+                json.dumps(
+                    {
+                        "status": "configuration-error",
+                        "error": str(exc)[:1000],
+                        "at": datetime.now().astimezone().isoformat(timespec="seconds"),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
             print(f"configuration error: {exc}", file=sys.stderr)
             raise SystemExit(2)
 

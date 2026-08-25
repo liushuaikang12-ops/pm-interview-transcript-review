@@ -6,9 +6,9 @@
     "strip_api_key_from_child": true
   },
   "feishu": {
-    "tenant_domain": "example.feishu.cn",
-    "space_id": "replace-with-organization-space-id",
-    "parent_node_token": "replace-with-fixed-parent-node-token",
+    "tenant_domain": "vcnvx4cwol1n.feishu.cn",
+    "space_id": "7677796340709133492",
+    "parent_node_token": "",
     "allowed_chat_ids": [],
     "dm_enabled": true,
     "auto_publish": true,

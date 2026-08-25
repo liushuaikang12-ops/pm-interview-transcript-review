@@ -183,15 +183,38 @@ def append_blocks(api: FeishuAPI, document_id: str, blocks: list[dict[str, Any]]
         )
 
 
-def verify_blocks(api: FeishuAPI, document_id: str) -> int:
+def verify_blocks(
+    api: FeishuAPI,
+    document_id: str,
+    *,
+    expected_content_blocks: int | None = None,
+) -> int:
     encoded = quote_path(document_id)
-    response = api.request(
-        "GET", f"/docx/v1/documents/{encoded}/blocks?page_size=50"
-    )
-    items = response.get("data", {}).get("items", [])
-    if len(items) <= 1:
+    total = 0
+    page_token = ""
+    seen_tokens: set[str] = set()
+    while True:
+        path = f"/docx/v1/documents/{encoded}/blocks?page_size=50"
+        if page_token:
+            path += f"&page_token={quote_path(page_token)}"
+        response = api.request("GET", path)
+        data = response.get("data", {})
+        total += len(data.get("items", []))
+        if not data.get("has_more"):
+            break
+        next_token = str(data.get("page_token", "")).strip()
+        if not next_token or next_token in seen_tokens:
+            raise FeishuAPIError("post-write verification pagination did not advance")
+        seen_tokens.add(next_token)
+        page_token = next_token
+    if total <= 1:
         raise FeishuAPIError("post-write verification found no document content blocks")
-    return len(items)
+    if expected_content_blocks is not None and total < expected_content_blocks + 1:
+        raise FeishuAPIError(
+            "post-write verification found fewer blocks than were written: "
+            f"expected at least {expected_content_blocks + 1}, got {total}"
+        )
+    return total
 
 
 def publish(
@@ -245,7 +268,9 @@ def publish(
     }
     atomic_json(manifest, partial)
     append_blocks(api, obj_token, blocks)
-    verified_blocks = verify_blocks(api, obj_token)
+    verified_blocks = verify_blocks(
+        api, obj_token, expected_content_blocks=len(blocks)
+    )
     completed = {
         **partial,
         "status": "verified",

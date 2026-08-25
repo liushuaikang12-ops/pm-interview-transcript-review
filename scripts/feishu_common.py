@@ -13,6 +13,8 @@ from typing import Any, Callable
 
 DEFAULT_HOME = Path.home() / ".pm-interview-review-os"
 CONFIG_ENV = "PM_INTERVIEW_REVIEW_CONFIG"
+FIXED_TENANT_DOMAIN = "vcnvx4cwol1n.feishu.cn"
+FIXED_WIKI_SPACE_ID = "7677796340709133492"
 
 
 class ConfigurationError(RuntimeError):
@@ -65,6 +67,17 @@ def load_config(explicit: str | Path | None = None) -> dict[str, Any]:
 def require_feishu_credentials() -> tuple[str, str]:
     app_id = os.environ.get("FEISHU_APP_ID", "").strip()
     app_secret = os.environ.get("FEISHU_APP_SECRET", "").strip()
+    if os.name == "nt" and (not app_id or not app_secret):
+        import winreg
+
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as key:
+                if not app_id:
+                    app_id = str(winreg.QueryValueEx(key, "FEISHU_APP_ID")[0]).strip()
+                if not app_secret:
+                    app_secret = str(winreg.QueryValueEx(key, "FEISHU_APP_SECRET")[0]).strip()
+        except FileNotFoundError:
+            pass
     if not app_id or not app_secret:
         raise ConfigurationError(
             "FEISHU_APP_ID and FEISHU_APP_SECRET must be set for the current user"
@@ -79,6 +92,14 @@ def feishu_config(config: dict[str, Any]) -> dict[str, Any]:
     for key in ("space_id", "tenant_domain"):
         if not str(value.get(key, "")).strip():
             raise ConfigurationError(f"missing feishu.{key}")
+    if str(value["tenant_domain"]).strip() != FIXED_TENANT_DOMAIN:
+        raise ConfigurationError(
+            f"feishu.tenant_domain must be the fixed organization domain {FIXED_TENANT_DOMAIN}"
+        )
+    if str(value["space_id"]).strip() != FIXED_WIKI_SPACE_ID:
+        raise ConfigurationError(
+            f"feishu.space_id must be the fixed organization Wiki {FIXED_WIKI_SPACE_ID}"
+        )
     return value
 
 

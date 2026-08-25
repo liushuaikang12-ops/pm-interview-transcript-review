@@ -61,32 +61,46 @@ python -m pip install -r requirements-feishu.txt
    - 查看、编辑和管理知识库。
 6. 发布应用版本。所有使用者都是管理员，因此由本人完成发布与审批。
 
+飞书控制台要求先建立一次真实长连接，才允许验证并保存 WebSocket 订阅方式。凭证已写入用户环境变量后，在 Skill 目录运行：
+
+```powershell
+$env:FEISHU_APP_ID = [Environment]::GetEnvironmentVariable("FEISHU_APP_ID", "User")
+$env:FEISHU_APP_SECRET = [Environment]::GetEnvironmentVariable("FEISHU_APP_SECRET", "User")
+python scripts/feishu_websocket_probe.py
+```
+
+保持该进程运行，在控制台点击“验证”并保存订阅方式；完成后按 `Ctrl+C` 停止探针。探针不得输出 App Secret。
+
 飞书控制台可能调整权限显示名称。不要仅凭权限名称声称接入成功；以 `doctor.py` 的真实 token、Wiki 读取和首次写入结果为准。
 
 ### 2.4 配置个人应用凭证
 
-在每位用户自己的系统环境中设置：
+Windows 推荐使用 Skill 自带的掩码输入脚本，避免 Secret 出现在命令历史：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set_feishu_credentials.ps1 -AppId "cli_xxx"
+```
+
+脚本会提示输入 App Secret，输入过程不回显，并将 App ID/Secret 写入当前 Windows 用户环境变量。macOS/Linux 或无法运行该脚本时，再在每位用户自己的系统环境中设置：
 
 ```powershell
 [Environment]::SetEnvironmentVariable("FEISHU_APP_ID", "cli_xxx", "User")
 [Environment]::SetEnvironmentVariable("FEISHU_APP_SECRET", "xxx", "User")
 ```
 
-关闭并重新打开终端。运行 `$env:FEISHU_APP_ID` 只能用于确认 App ID；不要打印 App Secret。不得把 Secret 写入 JSON、README、日志、报告或 Git。
+关闭并重新打开终端。运行 `$env:FEISHU_APP_ID` 只能用于确认 App ID；不要打印 App Secret。不得把 Secret 写入 JSON、README、日志、报告、Git 或终端命令历史。
 
 ### 2.5 固定知识库
 
 1. 打开组织约定的知识库。
 2. 将知识库可见范围限定为组织成员或组织内指定成员，不启用互联网公开分享。
 3. 将自己的应用/机器人加入该知识库，并给予目标父节点编辑权限。
-4. 从组织维护者处取得固定的 `space_id`、可选 `parent_node_token` 和企业域名。这三项对所有使用者相同，可以预置在组织版安装包，但不能包含 App Secret。
+4. 本 Skill 的目标已固定为组织知识库 `秋招知识库`：域名 `vcnvx4cwol1n.feishu.cn`，`space_id` 为 `7677796340709133492`，根目录发布。不得改投其他知识库；这些标识不包含 App Secret。
+   应用发布并加入知识库后运行 `python scripts/list_feishu_wikis.py`，确认应用真实可见该 `space_id`，不要只凭 URL 判断。
 5. 在 Skill 目录运行：
 
 ```powershell
 python scripts/setup_codex_feishu.py `
-  --tenant-domain "example.feishu.cn" `
-  --space-id "组织固定知识库ID" `
-  --parent-node-token "固定目录节点" `
   --chat-id "oc_允许自动处理的群ID"
 ```
 

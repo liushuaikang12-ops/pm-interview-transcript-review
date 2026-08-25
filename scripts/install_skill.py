@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -25,6 +27,9 @@ PACKAGE_FILES = (
     "scripts/render_review.py",
     "scripts/validate_skill.py",
     "scripts/feishu_common.py",
+    "scripts/set_feishu_credentials.ps1",
+    "scripts/feishu_websocket_probe.py",
+    "scripts/list_feishu_wikis.py",
     "scripts/setup_codex_feishu.py",
     "scripts/doctor.py",
     "scripts/validate_review.py",
@@ -95,6 +100,47 @@ def first_link_like_component(path: Path) -> Path | None:
     return None
 
 
+def grant_current_user_read_execute(destination: Path) -> None:
+    """Keep a user-scoped install readable by that user's limited task token."""
+    if os.name != "nt":
+        return
+    identity = subprocess.run(
+        ["whoami", "/user", "/fo", "csv", "/nh"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    try:
+        sid = next(csv.reader([identity.stdout.strip()]))[1]
+    except (IndexError, StopIteration) as exc:
+        raise OSError("failed to resolve the current Windows user SID") from exc
+    completed = subprocess.run(
+        [
+            "icacls",
+            str(destination),
+            "/grant:r",
+            f"*{sid}:(OI)(CI)RX",
+            "/T",
+            "/C",
+            "/Q",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise OSError(
+            "failed to grant the current user read/execute permission on installed skill: "
+            + completed.stdout[-1000:]
+        )
+
+
 def install(destination: Path, force: bool) -> None:
     if not (SOURCE_ROOT / "SKILL.md").is_file():
         raise SystemExit(f"invalid source package: {SOURCE_ROOT / 'SKILL.md'} is missing")
@@ -160,8 +206,11 @@ def install(destination: Path, force: bool) -> None:
             destination.replace(backup)
         try:
             staged.replace(destination)
+            grant_current_user_read_execute(destination)
         except Exception:
-            if backup is not None and backup.exists() and not destination.exists():
+            if backup is not None and backup.exists():
+                if destination.exists():
+                    shutil.rmtree(destination)
                 backup.replace(destination)
             raise
         if backup is not None and backup.exists():

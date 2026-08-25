@@ -46,13 +46,10 @@ codex login status
 5. 将自己的应用加入组织固定知识库并授予编辑权限。
 6. 在自己的系统账户中设置 `FEISHU_APP_ID` 和 `FEISHU_APP_SECRET`。
 
-配置非敏感的固定知识库和允许群：
+固定知识库已内置为 `秋招知识库`（`vcnvx4cwol1n.feishu.cn` / `7677796340709133492`）。配置私聊和可选允许群：
 
 ```powershell
 python scripts/setup_codex_feishu.py `
-  --tenant-domain "example.feishu.cn" `
-  --space-id "组织固定知识库ID" `
-  --parent-node-token "固定目录节点" `
   --chat-id "oc_允许自动处理的群ID"
 ```
 
