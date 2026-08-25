@@ -142,7 +142,7 @@ python scripts/install_skill.py --agent universal --scope user --dry-run
 │   └── <interview_id>/
 │       ├── source-manifest.json        # 输入来源、完整性、时间戳与可信用途
 │       ├── transcript.normalized.md    # 清洗后实录，不覆盖原文件
-│       ├── review.md                   # 面向人的完整 16 章复盘
+│       ├── review.md                   # 面向人的第 0 章实录/建议 + 16 章诊断
 │       ├── record.json                 # 面向机器的单场事实记录
 │       ├── answer-playbook.md          # 可选：问题 + 建议答案备考版
 │       └── review.html                 # 可选：HTML 阅读版
@@ -169,19 +169,20 @@ export PM_INTERVIEW_REVIEW_HOME=/path/to/private/workspace
 
 ### 默认前置：实录（Question Transcript）与回答建议（Better Answer）
 
-Full Review 默认在诊断报告之前，先输出「面试官问题原文 + 追问 + 回复」的实录，以及每个问题的「回答建议」（Better Answer，只使用已有事实、缺口用占位符）。实录示例：
+Full Review 默认在诊断报告之前输出固定的第 0 章，包含：`0.1 面试官提问与候选人回复`、`0.2 回答建议`、`0.3 候选人反问与面试官回答原文`。先从 Transcript 生成并校验 `record.json`，再从记录渲染报告，避免问答错位或随机漏项。
 
 ```text
 Q01 面试官原始问题
+├── Candidate Answer A01
 ├── Q01.1 第一层追问
+│   ├── Candidate Answer A01.1
 │   └── Q01.1.1 证据挑战
+│       └── Candidate Answer A01.1.1
 └── Q01.2 替代方案 / Trade-off 追问
-
-面试官：……
-候选人：……
+    └── Candidate Answer A01.2
 ```
 
-它保留问题原文、追问和候选人回复，并以时间戳或稳定段落定位。无法确认的专有名词标记为“录音转写不清”，不猜测补齐。
+每个问题、追问和回复使用同一个 Q ID，并分别保留问题与回答 anchor。没有回答时显式写 `No answer captured`。无法确认的专有名词保留原转写并标记“录音转写不清”；只有音频复核或其他可靠来源能够确认时才修正。
 
 ### 1. Executive Summary
 
@@ -344,7 +345,7 @@ Shadow JD 不复述职位描述，而是回答：实际工作重心是什么、�
 
 ## Answer Playbook：问题 + 回答建议版
 
-当目标从“诊断本场”切换为“准备下一场”时，可以额外生成 `answer-playbook.md`：
+Full Review 的第 0.2 节是回答建议的唯一正文；第 6 章只做关键回答诊断并引用第 0.2 节，不再重复 Suggested Answer。当目标从“诊断本场”切换为“准备下一场”时，可以单独生成不含实际回答和 16 章诊断的 `answer-playbook.md`：
 
 ```text
 问题原文
@@ -356,7 +357,7 @@ Shadow JD 不复述职位描述，而是回答：实际工作重心是什么、�
     └── Missing Facts / Placeholders
 ```
 
-这个版本可以不展示候选人的实际回答，但仍必须执行 Atomic Claim Audit。候选人反问与面试官回答保留原文，不改写成建议答案。
+这个版本不展示候选人的实际回答，但仍必须执行 Atomic Claim Audit。只为有候选人回答的 root/follow-up 生成建议；Administrative 与候选人反问不生成 Better Answer。候选人反问与面试官回答保留原文，不改写成建议答案。
 
 ## 六种运行模式
 

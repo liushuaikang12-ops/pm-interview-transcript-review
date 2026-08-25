@@ -2,6 +2,7 @@
 """Portable acceptance tests for pm-interview-transcript-review."""
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 import os
@@ -241,7 +242,7 @@ def main() -> None:
 
     expected_chapters = [(str(index), title) for index, title in enumerate(OUTPUT_CHAPTERS, start=1)]
     if "## Output Contract" in skill:
-        output_contract = skill.split("## Output Contract", 1)[1].split("### 实录前置", 1)[0]
+        output_contract = skill.split("## Output Contract", 1)[1].split("### 第 0 章", 1)[0]
         skill_chapters = [
             (number, re.split(r"[：:]", title, maxsplit=1)[0].strip())
             for number, title in re.findall(r"^(\d{1,2})\.\s+(.+?)\s*$", output_contract, flags=re.MULTILINE)
@@ -260,6 +261,15 @@ def main() -> None:
     template = (ROOT / "templates/full-review.md").read_text(encoding="utf-8")
     template_chapters = re.findall(r"^#\s+([1-9]\d*)\.\s+(.+?)\s*$", template, flags=re.MULTILINE)
     check(template_chapters == expected_chapters, "full-review template must contain exactly the ordered 16 chapters", errors)
+    for heading in (
+        "# 0. 面试实录与回答建议",
+        "## 0.1 面试官提问与候选人回复",
+        "## 0.2 回答建议",
+        "## 0.3 候选人反问与面试官回答原文",
+    ):
+        check(heading in template, f"full-review template missing stable front module: {heading}", errors)
+    check("No answer captured" in template, "full-review template lacks an explicit unanswered state", errors)
+    check("本章不重复 Suggested Answer" in template, "chapter 6 does not de-duplicate Better Answers", errors)
 
     for script in ("install_skill.py", "interview_os.py", "transcribe_media.py", "render_review.py", "validate_skill.py"):
         try:
@@ -558,7 +568,60 @@ def main() -> None:
         errors.append(f"JSON schema validation failed: {exc}")
 
     errors.extend(f"record semantic validation: {item}" for item in interview_os.validate_record(record))
+    legacy_record = copy.deepcopy({
+        key: value
+        for key, value in record.items()
+        if key not in {"question_transcript", "answer_suggestions"}
+    })
+    legacy_record["schema_version"] = "1.0"
+    suggestion_by_id = {item["question_id"]: item for item in record["answer_suggestions"]}
+    for review in legacy_record["key_answer_reviews"]:
+        review.pop("answer_suggestion_ref", None)
+        review["suggested_answer"] = suggestion_by_id[review["question_id"]]["suggested_answer"]
+    check(
+        not interview_os.validate_record(legacy_record),
+        "interview_os no longer accepts legacy schema 1.0 records",
+        errors,
+    )
+    missing_pair_record = copy.deepcopy(record)
+    missing_pair_record["question_transcript"].pop()
+    check(
+        bool(interview_os.validate_record(missing_pair_record)),
+        "negative record fixture accepted a missing question/answer pair",
+        errors,
+    )
+    reverse_suggestion_record = copy.deepcopy(record)
+    reverse_suggestion = copy.deepcopy(reverse_suggestion_record["answer_suggestions"][0])
+    reverse_suggestion["question_id"] = "Q05"
+    reverse_suggestion_record["answer_suggestions"].append(reverse_suggestion)
+    check(
+        bool(interview_os.validate_record(reverse_suggestion_record)),
+        "negative record fixture accepted a Better Answer for a candidate reverse question",
+        errors,
+    )
+    missing_exchange_record = copy.deepcopy(record)
+    missing_exchange_record["reverse_interview"]["exchanges"] = []
+    check(
+        bool(interview_os.validate_record(missing_exchange_record)),
+        "negative record fixture accepted an unpaired candidate reverse question",
+        errors,
+    )
     questions = record["questions"]
+    eligible_question_ids = {
+        item["id"] for item in questions if item["type"] in {"root", "follow-up"}
+    }
+    reverse_question_ids = {
+        item["id"] for item in questions if item["type"] == "candidate-reverse-question"
+    }
+    transcript_question_ids = {item["question_id"] for item in record["question_transcript"]}
+    suggestion_question_ids = {item["question_id"] for item in record["answer_suggestions"]}
+    reverse_exchange_ids = {
+        item["question_id"] for item in record["reverse_interview"]["exchanges"]
+    }
+    check(transcript_question_ids == eligible_question_ids, "structured transcript coverage drifted from questions", errors)
+    check(suggestion_question_ids == eligible_question_ids, "answer suggestions do not cover every eligible question", errors)
+    check(reverse_exchange_ids == reverse_question_ids, "reverse exchanges do not cover every candidate reverse question", errors)
+    check(not (suggestion_question_ids & reverse_question_ids), "candidate reverse question received a Better Answer", errors)
     q02_descendants = [question for question in questions if question["id"].startswith("Q02.")]
     check(len(q02_descendants) >= 5, "fixture lacks a root question with at least five follow-ups", errors)
     check(any(question["parent_id"] is not None for question in questions), "fixture flattened all follow-ups", errors)
@@ -574,7 +637,7 @@ def main() -> None:
     )
     check(all(item.get("evidence") for item in record["key_answer_reviews"]), "key answer without evidence", errors)
     check(
-        any("[这里需要补充：" in item.get("suggested_answer", "") for item in record["key_answer_reviews"]),
+        any("[这里需要补充：" in item.get("suggested_answer", "") for item in record["answer_suggestions"]),
         "Better Answer fixture does not preserve fact gaps",
         errors,
     )
@@ -594,16 +657,57 @@ def main() -> None:
         text = expected.read_text(encoding="utf-8-sig")
         sample_chapters = re.findall(r"^#\s+([1-9]\d*)\.\s+(.+?)\s*$", text, flags=re.MULTILINE)
         check(sample_chapters == expected_chapters, "test-run output must contain exactly the ordered 16 chapters", errors)
+        front_match = re.search(
+            r"^# 0\. 面试实录与回答建议\s*$([\s\S]*?)(?=^# 1\. Executive Summary\s*$)",
+            text,
+            flags=re.MULTILINE,
+        )
+        check(front_match is not None, "test-run output is missing the complete chapter 0", errors)
+        front = front_match.group(1) if front_match else ""
+        raw_section = front.split("## 0.1 面试官提问与候选人回复", 1)[-1].split("## 0.2 回答建议", 1)[0]
+        suggestion_section = front.split("## 0.2 回答建议", 1)[-1].split("## 0.3 候选人反问与面试官回答原文", 1)[0]
+        reverse_section = front.split("## 0.3 候选人反问与面试官回答原文", 1)[-1]
+        sample_raw_ids = re.findall(r"^#{3,5}\s+(Q[0-9]{2,}(?:\.[0-9]+)*)\b", raw_section, flags=re.MULTILINE)
+        sample_suggestion_ids = re.findall(r"^###\s+(Q[0-9]{2,}(?:\.[0-9]+)*)\s*$", suggestion_section, flags=re.MULTILINE)
+        sample_reverse_ids = re.findall(r"^###\s+(RQ[0-9]{2,})\s*$", reverse_section, flags=re.MULTILINE)
+        check(len(sample_raw_ids) == len(set(sample_raw_ids)), "chapter 0.1 repeats a Q ID", errors)
+        check(set(sample_raw_ids) == eligible_question_ids, "chapter 0.1 does not cover every root/follow-up", errors)
+        check(len(sample_suggestion_ids) == len(set(sample_suggestion_ids)), "chapter 0.2 repeats a Q ID", errors)
+        check(set(sample_suggestion_ids) == suggestion_question_ids, "chapter 0.2 does not match structured answer suggestions", errors)
+        expected_reverse_ids = {item["exchange_id"] for item in record["reverse_interview"]["exchanges"]}
+        check(set(sample_reverse_ids) == expected_reverse_ids, "chapter 0.3 does not match reverse exchanges", errors)
+        check(raw_section.count("候选人原回复：") == len(eligible_question_ids), "chapter 0.1 has missing or duplicate candidate replies", errors)
+        for label in ("Recommended Structure", "Suggested Answer", "Missing Facts", "Provenance Check"):
+            check(
+                suggestion_section.count(f"- {label}：") == len(suggestion_question_ids),
+                f"chapter 0.2 does not contain exactly one {label} per suggestion",
+                errors,
+            )
+        for row in record["question_transcript"]:
+            qid = row["question_id"]
+            check(row["question"]["raw_text"] in raw_section, f"chapter 0.1 changed or omitted raw question {qid}", errors)
+            if row["answer"]["status"] == "captured":
+                check(row["answer"]["raw_text"] in raw_section, f"chapter 0.1 changed or omitted raw answer {qid}", errors)
+        for item in record["answer_suggestions"]:
+            check(item["suggested_answer"] in suggestion_section, f"chapter 0.2 drifted from answer suggestion {item['question_id']}", errors)
+        for item in record["reverse_interview"]["exchanges"]:
+            check(item["candidate_question"]["raw_text"] in reverse_section, f"chapter 0.3 omitted {item['exchange_id']} candidate question", errors)
+            check(item["interviewer_answer"]["raw_text"] in reverse_section, f"chapter 0.3 omitted {item['exchange_id']} interviewer answer", errors)
+        diagnostics = text.split("# 1. Executive Summary", 1)[-1]
+        check("### Part B — Suggested Answer" not in diagnostics, "chapter 6 duplicates Suggested Answers from chapter 0.2", errors)
+        check("Better version（如需）" not in diagnostics, "chapter 13 rewrites candidate reverse questions", errors)
         check("Q02.2.1" in text and "Q02.4.1" in text and "Q02.5.1" in text, "test-run output missing nested follow-up", errors)
         check("推断" in text and "Evidence" in text, "test-run output lacks fact/inference or evidence labeling", errors)
         check("[这里需要补充：" in text, "test-run Better Answer may have invented missing facts", errors)
-        check(
-            text.count("### Part B — Suggested Answer") == text.count("### Provenance Check"),
-            "every Suggested Answer needs a Provenance Check",
-            errors,
-        )
         check("知道用户常常不知道该怎么描述需求" not in text, "fixture caught an unsupported insight inferred only from '做过用户访谈'", errors)
         check("Insufficient history" in text and "首场" in text, "test-run invented or omitted first-session trend state", errors)
+        html_path = ROOT / "examples/test-run-output.html"
+        check(html_path.exists(), "rendered HTML fixture is missing", errors)
+        if html_path.exists():
+            html_text = html_path.read_text(encoding="utf-8-sig")
+            check("0.1 面试官提问与候选人回复" in html_text, "rendered HTML omitted chapter 0.1", errors)
+            check("RQ01" in html_text and "北极星还是创作 DAU" in html_text, "rendered HTML omitted reverse-interview originals", errors)
+            check("Part B — Suggested Answer" not in html_text, "rendered HTML retained duplicated chapter 6 Better Answers", errors)
 
     regression = ROOT / "examples/atomic-claim-regression.md"
     check(regression.exists(), "missing Atomic Claim regression artifact", errors)
@@ -627,6 +731,9 @@ def main() -> None:
                 "required_files": len(REQUIRED_FILES),
                 "package_files": len(installer.PACKAGE_FILES),
                 "questions": len(questions),
+                "question_transcript": len(record["question_transcript"]),
+                "answer_suggestions": len(record["answer_suggestions"]),
+                "reverse_exchanges": len(record["reverse_interview"]["exchanges"]),
                 "q02_followups": len(q02_descendants),
                 "shortcoming_cards": len(record["shortcoming_cards"]),
                 "installer_smoke_test": True,

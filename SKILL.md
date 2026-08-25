@@ -5,7 +5,7 @@ license: MIT
 compatibility: Agent Skills open standard. Core workflow needs file reading and Markdown output; optional scripts need Python 3.10+, and local media transcription additionally needs ffmpeg plus faster-whisper.
 metadata:
   author: liushuaikang12-ops
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # PM Interview Review OS
@@ -37,12 +37,12 @@ metadata:
 
 | Mode | 产出 | 何时使用 |
 |---|---|---|
-| A — Full Review | 完整 16 章复盘 + 历史更新 | 默认 |
+| A — Full Review | 第 0 章实录与回答建议 + 16 章诊断 + 历史更新 | 默认 |
 | B — Question Extraction | 全量问题、Q&A ID、Follow-up Tree、Intent | 用户只要问题结构 |
 | C — Answer Critique | 关键回答评分、Root Cause、Better Answer | 用户只要回答诊断 |
 | D — Interviewer Intelligence | 反问信息、Interview Style、Shadow JD | 用户只关心岗位与面试官信号 |
 | E — Cross Interview Review | 跨场趋势、题库、能力矩阵、反模式、校准 | 输入多场或明确比较 |
-| F — Next Round Prep | P0/P1/P2、Story/Project drill、问题预测 | 准备下一轮 |
+| F — Next Round Prep | Answer Playbook、P0/P1/P2、Story/Project drill、问题预测；不输出完整诊断 | 准备下一轮 |
 
 用户未指定时采用 **Mode A — Full Review**。模式只裁剪输出，不降低 Evidence 标准。
 
@@ -111,12 +111,13 @@ python "<skill-directory>/scripts/interview_os.py" status
 每个核心节点包含：
 
 - `Surface Question`
+- Question anchor 与问题原文
 - `Underlying Intent`（标记为 `推断`）
-- Candidate Answer anchor
+- Candidate Answer anchor、原回复与 `captured / no-answer / uncertain` 状态
 - Follow-up trigger：面试官为何继续追问（可多解时列 alternatives）
 - Competency tags
 
-完成条件：Pass 1 的每个有效问题都在树中或被明确标为独立 Root/Administrative；数量可对账。
+候选人反问使用 `candidate-reverse-question`，单独保存候选人问题原文与面试官回答原文的配对；它不进入 Better Answer。寒暄、结束语等 `administrative` 节点不进入回答建议。完成条件：Pass 1 的每个有效问题都在树中或被明确标为独立 Root/Administrative；每个可回答节点都有对应回复或显式 `No answer captured`；数量可对账。
 
 ### 4. Evidence Ledger
 
@@ -236,7 +237,7 @@ Anti-pattern 统计单位必须定义（默认：一次独立回答/Q&A 节点�
 
 ## Output Contract
 
-Full Review 默认先输出「实录前置（面试官问题原文 + 追问 + 回复）」和「回答建议（Better Answer）」两个前置模块（见下），再严格按 `templates/full-review.md` 的 16 章输出诊断：
+Full Review 严格按 `templates/full-review.md` 输出：先生成第 0 章的「面试官提问与候选人原回复」「回答建议」「候选人反问与面试官回答原文」，再输出以下 16 章诊断：
 
 1. Executive Summary
 2. Interview Structure
@@ -257,15 +258,26 @@ Full Review 默认先输出「实录前置（面试官问题原文 + 追问 + �
 
 Executive Summary 必须给“最大优势、最大风险、最可能在下一层追问暴露的断点”，并带 Evidence anchor；禁止“总体不错、仍有空间”。总评包含 Overall Performance、Confidence、Strongest Areas、Biggest Risks、Likely Concerns、Positive Signals、Uncertain Areas。不要给无证据的“通过率 xx%”。
 
-默认产出 Markdown；用户要求时再渲染 HTML。长复盘写入工作区文件并在回复中给路径与锋利摘要，不要把所有历史 JSON 倾倒到聊天。
+默认产出 Markdown；用户要求时再渲染 HTML。长复盘写入工作区文件并在回复中给路径与锋利摘要，不要把所有历史 JSON 倾倒到聊天，也不得因篇幅静默省略问题或章节。
 
-### 实录前置（Question Transcript）
+生成顺序固定为两阶段：
 
-Full Review 诊断之前，默认在 Executive Summary 之前输出「面试官问题原文 + 追问 + 回复」的实录模块：问题原文用引用格式、连续编号，追问与回复分别标注「面试官」「候选人」。实录放在复盘最前面，用于快速回顾问答全貌。实录必须逐条来自 Transcript，转写错误要修正（音近专有名词、模型名无法确认处标注「录音转写不清」）。
+- **Phase 1 — `Transcript → record.json`**：先完成逐轮问答配对、Q&A ID、追问 parent、原文、anchor、回答建议和反问 exchange，并通过 Schema/语义对账。
+- **Phase 2 — `record.json → review.md / answer-playbook.md`**：再按模板渲染。不得边读 Transcript 边自由组织最终报告。
+
+### 第 0 章：实录与回答建议
+
+第 0 章严格分为三个子模块：
+
+1. `0.1 面试官提问与候选人回复`：每个 `root / follow-up` 节点按 Q ID 输出问题 anchor、面试官原文、回答 anchor、候选人原回复；追问紧跟所属 Root。无回答写 `No answer captured`，不得省略。
+2. `0.2 回答建议`：覆盖每个有候选人回答的 `root / follow-up` 节点，按同一 Q ID 输出 Recommended Structure、Suggested Answer、Missing Facts 与 Provenance Check。
+3. `0.3 候选人反问`：按 `RQxx` 输出候选人反问原文和对应的面试官回答原文；无回答写 `No answer captured`。不得为反问生成 Better Answer。
+
+“原文”指 Transcript 中的文本，不润色、不改语序、不删除口头语。只有音频复核或其他可靠来源能够确认时才能修正 ASR；否则保留原转写并标记 `录音转写不清`。`Clean Version` 与 `Suggested Answer` 必须另行标注，不能冒充原文。
 
 ### 回答建议版（Answer Playbook）
 
-默认在实录之后、16 章诊断之前，输出「回答建议」（Better Answer）模块，文档主体为「问题原文 + 追问 + 回答建议」，实际回答不展示；用户只要备考文档时（回答建议版），则只输出此模块、不再输出 16 章诊断。回答建议只使用 Transcript/简历/JD 已有事实，缺口用 `[这里需要补充：…]` 占位，假设题/设计题标注「建议 / 假设」；每个问题的回答建议都要做 provenance check，禁止把建议写成候选人已做过的经历。此模块仍遵守第 8 节零编造与 provenance 规则。回答建议中，「候选人反问」部分保留原文（候选人反问 + 面试官回答原文），不做「建议」改写——反问是获取岗位信息的动作，不是可优化的回答。
+Full Review 中，第 0.2 节展示回答建议，第 6 章只做关键回答诊断并引用对应的 `0.2 / Qxx`，不得再次粘贴 Suggested Answer。用户只要备考文档时采用 Mode F：仅输出 Answer Playbook 与下一轮训练，不输出候选人实际回答或 16 章诊断。回答建议只使用 Transcript/简历/JD 已有事实，缺口用 `[这里需要补充：…]` 占位，假设题/设计题标注「建议 / 假设」；每个符合条件的问题都要做 provenance check。候选人反问不做建议改写，只保留原问与面试官回答原文。
 
 完整交付时，用户可能要求把「实录 + 回答建议 + 16 章诊断」整体写入外部文档（飞书等），不要只留工作区文件路径——用户在聊天平台看不到本地路径，务必把内容落地到用户能直接打开的载体。
 
@@ -301,13 +313,16 @@ Full Review 诊断之前，默认在 Executive Summary 之前输出「面试官�
 4. **Better Answer 脑补**：逐句 provenance check，缺口用 placeholder。
 5. **历史累计漂移**：从 records 重建 aggregates，不手改总数。
 6. **把手段当能力**：Growth 不等于活动，AI PM 不等于口号。
-7. **报告过长失焦**：全量问题放 Question Map，深评只覆盖决定性回答。
+7. **报告过长失焦**：第 0.1 节保留全量问答，第 0.2 节覆盖所有可回答节点，第 6 章只深评决定性回答并引用第 0.2 节，不重复 Suggested Answer。
 
 ## Verification Checklist
 
 - [ ] 输入与历史基线已清点，原始材料未覆盖。
 - [ ] Speaker 不确定处标 Unknown。
 - [ ] Pass 1 问题数与 Follow-up Tree 节点可对账，未把追问全部平铺。
+- [ ] 每个 root/follow-up 都有原问题、anchor、候选人原回复或 `No answer captured`。
+- [ ] 每个可回答节点在第 0.2 节有且仅有一条回答建议；Administrative 与候选人反问没有 Better Answer。
+- [ ] 每条候选人反问都与面试官回答原文或 `No answer captured` 配对。
 - [ ] 每条重大 finding 有 timestamp/Q&A Evidence。
 - [ ] Fact 与 Inference 明确区分。
 - [ ] 五维评分使用动态权重并解释 cap。

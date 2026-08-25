@@ -12,7 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
+SUPPORTED_SCHEMA_VERSIONS = {"1.0", "1.1"}
 OUTCOMES = {"advanced", "rejected", "offer", "withdrew", "unknown"}
 CONFIDENCE_WEIGHT = {"high": 1.0, "medium": 0.7, "low": 0.4}
 
@@ -75,13 +76,15 @@ def validate_record(record: dict[str, Any]) -> list[str]:
         "questions", "key_answer_reviews", "competency_observations", "shortcoming_cards",
         "anti_patterns", "projects", "reverse_interview", "shadow_jd", "verdict"
     ]
+    if record.get("schema_version") == "1.1":
+        required.extend(["question_transcript", "answer_suggestions"])
     for key in required:
         if key not in record:
             errors.append(f"missing required field: {key}")
     if errors:
         return errors
-    if record["schema_version"] != SCHEMA_VERSION:
-        errors.append(f"schema_version must be {SCHEMA_VERSION}")
+    if record["schema_version"] not in SUPPORTED_SCHEMA_VERSIONS:
+        errors.append(f"schema_version must be one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}")
     iid = record["interview_id"]
     if not isinstance(iid, str) or not iid or any(c in iid for c in '<>:"/\\|?*'):
         errors.append("interview_id is empty or contains unsafe path characters")
@@ -99,6 +102,83 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             errors.append(f"{q.get('id')}: question cannot parent itself")
         if len(q.get("competencies", [])) > 3:
             errors.append(f"{q.get('id')}: at most 3 primary competencies")
+
+    if record.get("schema_version") == "1.1":
+        eligible_id_order = [
+            q.get("id") for q in questions if q.get("type") in {"root", "follow-up"}
+        ]
+        eligible_ids = set(eligible_id_order)
+        reverse_ids = {
+            q.get("id") for q in questions if q.get("type") == "candidate-reverse-question"
+        }
+        transcript_rows = record.get("question_transcript", [])
+        transcript_ids = [row.get("question_id") for row in transcript_rows]
+        if len(transcript_ids) != len(set(transcript_ids)):
+            errors.append("question_transcript question_ids must be unique")
+        if set(transcript_ids) != eligible_ids:
+            errors.append("question_transcript must cover every root/follow-up exactly once")
+        elif transcript_ids != eligible_id_order:
+            errors.append("question_transcript must preserve question order")
+        captured_ids: set[str] = set()
+        questions_by_id = {q.get("id"): q for q in questions}
+        for row in transcript_rows:
+            qid = row.get("question_id")
+            question = row.get("question", {})
+            answer = row.get("answer", {})
+            source_question = questions_by_id.get(qid, {})
+            if row.get("parent_id") != source_question.get("parent_id"):
+                errors.append(f"{qid}: question_transcript parent_id disagrees with questions")
+            if row.get("type") != source_question.get("type"):
+                errors.append(f"{qid}: question_transcript type disagrees with questions")
+            if not question.get("raw_text") or not question.get("anchor"):
+                errors.append(f"{qid}: missing raw question text or anchor")
+            status = answer.get("status")
+            if status == "captured":
+                captured_ids.add(qid)
+                if not answer.get("raw_text") or not answer.get("anchor") or not answer.get("speaker"):
+                    errors.append(f"{qid}: captured answer needs speaker, raw_text and anchor")
+            elif status == "no-answer":
+                if answer.get("raw_text") is not None:
+                    errors.append(f"{qid}: no-answer must not contain raw_text")
+            elif status != "uncertain":
+                errors.append(f"{qid}: invalid answer status {status!r}")
+
+        suggestions = record.get("answer_suggestions", [])
+        suggestion_ids = [item.get("question_id") for item in suggestions]
+        if len(suggestion_ids) != len(set(suggestion_ids)):
+            errors.append("answer_suggestions question_ids must be unique")
+        if set(suggestion_ids) != captured_ids:
+            errors.append("answer_suggestions must cover every captured root/follow-up exactly once")
+        expected_suggestion_order = [qid for qid in transcript_ids if qid in captured_ids]
+        if suggestion_ids != expected_suggestion_order:
+            errors.append("answer_suggestions must preserve captured question order")
+        if set(suggestion_ids) & reverse_ids:
+            errors.append("candidate reverse questions must not have Better Answers")
+        for item in suggestions:
+            qid = item.get("question_id")
+            if not item.get("recommended_structure"):
+                errors.append(f"{qid}: answer suggestion lacks recommended_structure")
+            if not item.get("suggested_answer"):
+                errors.append(f"{qid}: answer suggestion lacks suggested_answer")
+            if not item.get("provenance"):
+                errors.append(f"{qid}: answer suggestion lacks provenance")
+
+        exchanges = record.get("reverse_interview", {}).get("exchanges", [])
+        exchange_qids = [item.get("question_id") for item in exchanges]
+        if len(exchange_qids) != len(set(exchange_qids)):
+            errors.append("reverse_interview exchange question_ids must be unique")
+        if set(exchange_qids) != reverse_ids:
+            errors.append("reverse_interview exchanges must cover every candidate reverse question")
+        for item in exchanges:
+            rqid = item.get("exchange_id")
+            candidate_question = item.get("candidate_question", {})
+            interviewer_answer = item.get("interviewer_answer", {})
+            if not candidate_question.get("raw_text") or not candidate_question.get("anchor"):
+                errors.append(f"{rqid}: missing candidate question raw text or anchor")
+            if interviewer_answer.get("status") == "captured" and (
+                not interviewer_answer.get("raw_text") or not interviewer_answer.get("anchor")
+            ):
+                errors.append(f"{rqid}: captured interviewer answer needs raw_text and anchor")
 
     valid_q = set(ids)
     dims = {"substance", "structure", "relevance", "credibility", "differentiation"}
@@ -119,8 +199,11 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             errors.append(f"{qid}: overall_score out of range 1..10")
         if not review.get("weight_profile"):
             errors.append(f"{qid}: missing weight_profile")
-        if "suggested_answer" not in review:
-            errors.append(f"{qid}: missing suggested_answer (placeholders are allowed)")
+        if record.get("schema_version") == "1.0":
+            if "suggested_answer" not in review:
+                errors.append(f"{qid}: missing suggested_answer (placeholders are allowed)")
+        elif review.get("answer_suggestion_ref") != qid:
+            errors.append(f"{qid}: answer_suggestion_ref must point to the same Q ID")
 
     mode = record.get("metadata", {}).get("mode")
     card_count = len(record.get("shortcoming_cards", []))

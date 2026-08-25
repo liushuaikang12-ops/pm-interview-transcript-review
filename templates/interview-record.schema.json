@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:pm-interview-transcript-review:interview-record:1.0",
+  "$id": "urn:pm-interview-transcript-review:interview-record:1.1",
   "title": "PM Interview Review OS — Interview Record",
   "type": "object",
   "required": [
@@ -10,6 +10,8 @@
     "source_manifest",
     "transcript",
     "questions",
+    "question_transcript",
+    "answer_suggestions",
     "key_answer_reviews",
     "competency_observations",
     "shortcoming_cards",
@@ -20,7 +22,7 @@
     "verdict"
   ],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"const": "1.1"},
     "interview_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$"},
     "metadata": {
       "type": "object",
@@ -90,11 +92,53 @@
         "additionalProperties": true
       }
     },
+    "question_transcript": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question_id", "parent_id", "type", "question", "answer"],
+        "properties": {
+          "question_id": {"type": "string", "pattern": "^Q[0-9]{2,}(\\.[0-9]+)*$"},
+          "parent_id": {"type": ["string", "null"]},
+          "type": {"enum": ["root", "follow-up"]},
+          "question": {"$ref": "#/$defs/dialogue_turn"},
+          "answer": {"$ref": "#/$defs/answer_turn"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "answer_suggestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question_id", "recommended_structure", "suggested_answer", "missing_facts", "provenance"],
+        "properties": {
+          "question_id": {"type": "string", "pattern": "^Q[0-9]{2,}(\\.[0-9]+)*$"},
+          "recommended_structure": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "suggested_answer": {"type": "string", "minLength": 1},
+          "missing_facts": {"type": "array", "items": {"type": "string"}},
+          "provenance": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["claim", "source_anchor"],
+              "properties": {
+                "claim": {"type": "string"},
+                "source_anchor": {"type": "string"}
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
     "key_answer_reviews": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["question_id", "evidence", "scores", "weight_profile", "overall_score", "gap_type", "root_causes", "suggested_answer"],
+        "required": ["question_id", "evidence", "scores", "weight_profile", "overall_score", "gap_type", "root_causes", "answer_suggestion_ref"],
         "properties": {
           "question_id": {"type": "string"},
           "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
@@ -103,6 +147,7 @@
           "overall_score": {"type": "number", "minimum": 1, "maximum": 10},
           "gap_type": {"enum": ["Capability", "Communication", "Evidence", "Knowledge", "None"]},
           "root_causes": {"type": "array", "items": {"type": "string"}, "maxItems": 3},
+          "answer_suggestion_ref": {"type": "string", "pattern": "^Q[0-9]{2,}(\\.[0-9]+)*$"},
           "recommended_structure": {"type": "array", "items": {"type": "string"}},
           "suggested_answer": {"type": "string"},
           "provenance": {"type": "array", "items": {"type": "string"}}
@@ -184,8 +229,22 @@
     "story_candidates": {"type": "array", "items": {"type": "object"}},
     "reverse_interview": {
       "type": "object",
-      "required": ["candidate_questions", "facts", "inferences"],
+      "required": ["exchanges", "candidate_questions", "facts", "inferences"],
       "properties": {
+        "exchanges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["exchange_id", "question_id", "candidate_question", "interviewer_answer"],
+            "properties": {
+              "exchange_id": {"type": "string", "pattern": "^RQ[0-9]{2,}$"},
+              "question_id": {"type": "string", "pattern": "^Q[0-9]{2,}$"},
+              "candidate_question": {"$ref": "#/$defs/dialogue_turn"},
+              "interviewer_answer": {"$ref": "#/$defs/answer_turn"}
+            },
+            "additionalProperties": false
+          }
+        },
         "candidate_questions": {"type": "array", "items": {"type": "object"}},
         "facts": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
         "inferences": {"type": "array", "items": {"type": "object"}}
@@ -231,6 +290,27 @@
     }
   },
   "$defs": {
+    "dialogue_turn": {
+      "type": "object",
+      "required": ["speaker", "raw_text", "anchor"],
+      "properties": {
+        "speaker": {"type": "string"},
+        "raw_text": {"type": "string", "minLength": 1},
+        "anchor": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "answer_turn": {
+      "type": "object",
+      "required": ["status", "speaker", "raw_text", "anchor"],
+      "properties": {
+        "status": {"enum": ["captured", "no-answer", "uncertain"]},
+        "speaker": {"type": ["string", "null"]},
+        "raw_text": {"type": ["string", "null"]},
+        "anchor": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
     "scores": {
       "type": "object",
       "required": ["substance", "structure", "relevance", "credibility", "differentiation"],

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "interview_id": "2099-01-15_xinghe_ai-growth_r1_test",
   "metadata": {
     "company": "星河科技（虚构）",
@@ -34,6 +34,42 @@
     {"id": "Q04.1", "parent_id": "Q04", "speaker": "Interviewer", "surface_question": "用户为什么回来，retention driver 是什么", "canonical_question": "Retention driver 是什么", "answer_anchor": "[00:18:39–00:19:16]", "type": "follow-up", "parent_confidence": "high", "underlying_intent": {"statement": "验证持续价值与习惯机制", "label": "inference", "confidence": "high"}, "competencies": ["Retention", "User Insight"]},
     {"id": "Q05", "parent_id": null, "speaker": "Candidate", "surface_question": "团队核心目标和岗位负责什么", "canonical_question": "团队核心目标与岗位职责", "answer_anchor": "[00:19:41–00:20:48]", "type": "candidate-reverse-question", "parent_confidence": "not-applicable", "underlying_intent": null, "competencies": []}
   ],
+  "question_transcript": [
+    {"question_id": "Q01", "parent_id": null, "type": "root", "question": {"speaker": "Interviewer", "raw_text": "先做一个两分钟以内的自我介绍，重点说和这个岗位最相关的经历。", "anchor": "[00:00:05–00:01:12]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "我叫陈辰，有两段产品实习。最近在晨光阅读负责新用户增长，主要参与注册流程和新手任务，也跟着做过数据看板。之前在校内做过一个 AI 写作助手。我觉得我执行力比较强，也愿意学习，希望在 AI 产品方向继续发展。除此之外我还做过很多需求，比如会员页改版、Push 文案优化和活动配置，整体上都有参与。", "anchor": "[00:01:13–00:03:25]"}},
+    {"question_id": "Q02", "parent_id": null, "type": "root", "question": {"speaker": "Interviewer", "raw_text": "你挑一个最能体现产品判断的项目讲。", "anchor": "[00:03:28–00:03:35]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "我讲晨光阅读的新用户激活。我们发现新用户留存不好，所以做了新手任务。我的工作是梳理需求、画原型、跟研发上线。上线后任务完成率是 42%，D1 留存从 24% 到 28%。", "anchor": "[00:03:36–00:05:10]"}},
+    {"question_id": "Q02.1", "parent_id": "Q02", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "为什么当时要做这个项目，而不是别的问题？", "anchor": "[00:05:12–00:05:20]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "因为留存很重要，而且当时老板比较关注。新用户如果留不下来，后面付费也不会好，所以我们就优先做了。", "anchor": "[00:05:21–00:06:02]"}},
+    {"question_id": "Q02.2", "parent_id": "Q02", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "你们怎么发现问题发生在新用户激活，而不是内容供给？", "anchor": "[00:06:05–00:06:13]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "我们看了漏斗，发现注册后很多人没有完成阅读。也访谈了几个用户，他们说不知道先看什么。所以我觉得需要引导。", "anchor": "[00:06:14–00:07:08]"}},
+    {"question_id": "Q02.2.1", "parent_id": "Q02.2", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "具体有什么数据？样本和口径是什么？", "anchor": "[00:07:10–00:07:16]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "大概有六成用户注册后没有完成首次阅读，访谈可能是七八个用户。数据是数据同学给的，具体窗口我记不太清，应该是当周新用户。", "anchor": "[00:07:17–00:08:02]"}},
+    {"question_id": "Q02.3", "parent_id": "Q02", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "为什么选新手任务？还有哪些方案，为什么没选？", "anchor": "[00:08:05–00:08:13]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "新手任务比较常见，开发也比较快。其他方案可能有推荐优化或者新人书单，但当时没有做，主要还是资源有限。", "anchor": "[00:08:14–00:09:05]"}},
+    {"question_id": "Q02.4", "parent_id": "Q02", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "你们用什么指标判断它有效？", "anchor": "[00:09:08–00:09:15]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "主要看任务完成率和 D1 留存。任务完成率 42%，D1 从 24% 到 28%，所以项目是有效的。我们也看了 DAU，但没有太大变化。", "anchor": "[00:09:16–00:10:12]"}},
+    {"question_id": "Q02.4.1", "parent_id": "Q02.4", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "D1 上涨就能证明是新手任务带来的吗？实验怎么做的？", "anchor": "[00:10:15–00:10:25]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "我们是全量上线，没有做 A/B，因为工期比较紧。上线那周 D1 涨了 4 个点，我觉得主要就是这个功能带来的，应该没有别的大活动。", "anchor": "[00:10:26–00:11:18]"}},
+    {"question_id": "Q02.5", "parent_id": "Q02", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "上线后有没有异常数据？", "anchor": "[00:11:21–00:11:30]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "有，任务奖励领取率很高，但完成首次阅读的人没有同比例增加。另外 D7 没有明显上涨，付费转化还从 2.1% 降到 1.8%。我当时判断是奖励不够大，所以建议提高积分，不过后来没有排期。", "anchor": "[00:11:31–00:12:28]"}},
+    {"question_id": "Q02.5.1", "parent_id": "Q02.5", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "为什么付费下降？你怎么验证“奖励不够大”这个判断？", "anchor": "[00:12:31–00:12:41]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "这个我没有具体分析。可能是用户只为了拿奖励，也可能是样本波动。因为我后面换项目了，所以没有继续跟。", "anchor": "[00:12:42–00:13:18]"}},
+    {"question_id": "Q02.6", "parent_id": "Q02", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "你刚才说“我做了新手任务”，你个人做的关键决策是什么？", "anchor": "[00:13:22–00:13:32]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "方案是大家一起讨论的。我主要画原型、写 PRD、跟进开发，关键决策应该是产品经理带着我们定的。", "anchor": "[00:13:33–00:14:12]"}},
+    {"question_id": "Q02.7", "parent_id": "Q02", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "如果现在让你重做一次，你会怎么做？", "anchor": "[00:14:16–00:14:25]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "我还是会做新手任务，但会先做 A/B，也会看 D7 和付费。奖励可以分层，完成阅读再发更多积分。至于推荐优化和新人书单哪个更好，[停顿]我需要再看数据。", "anchor": "[00:14:26–00:15:15]"}},
+    {"question_id": "Q03", "parent_id": null, "type": "root", "question": {"speaker": "Interviewer", "raw_text": "说说你对 AI 写作产品的理解。怎么提高用户第一次生成成功率？", "anchor": "[00:15:20–00:15:28]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "我觉得 AI 产品首先要解决真实用户问题，不能为了 AI 而 AI。体验要简单，Prompt 要写好，模型能力也很重要。可以优化输入框和引导，让用户更容易使用，也可以换更好的模型，这样第一次生成成功率就会提升。", "anchor": "[00:15:29–00:16:32]"}},
+    {"question_id": "Q03.1", "parent_id": "Q03", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "你说的“成功”怎么定义？失败以后怎么 recovery？", "anchor": "[00:16:35–00:16:45]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "成功就是用户觉得好用。失败可以让用户重新生成，或者给一些模板。具体指标我还没有系统想过。", "anchor": "[00:16:46–00:17:20]"}},
+    {"question_id": "Q04", "parent_id": null, "type": "root", "question": {"speaker": "Interviewer", "raw_text": "如果这个产品 D7 留存下降，你会做什么增长策略？", "anchor": "[00:17:24–00:17:34]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "我会先发 Push 召回，也可以做签到、积分和邀请好友。不同用户发不同内容，再配一些限时活动，应该能把留存拉回来。", "anchor": "[00:17:35–00:18:28]"}},
+    {"question_id": "Q04.1", "parent_id": "Q04", "type": "follow-up", "question": {"speaker": "Interviewer", "raw_text": "用户为什么要回来？你认为 retention driver 是什么？", "anchor": "[00:18:30–00:18:38]"}, "answer": {"status": "captured", "speaker": "Candidate", "raw_text": "主要还是有奖励，还有 AI 比较新鲜。如果活动持续做，用户应该会形成习惯。具体 driver 可能要上线后看数据。", "anchor": "[00:18:39–00:19:16]"}}
+  ],
+  "answer_suggestions": [
+    {"question_id": "Q01", "recommended_structure": ["岗位定位", "两段最相关经历", "与 AI Growth 岗位的连接"], "suggested_answer": "我有两段产品实习经历。最近在晨光阅读参与新用户增长，负责需求梳理、原型、PRD 和研发跟进，也接触过数据看板；此前做过校园 AI 写作助手。我希望继续在 AI 产品方向发展。[这里需要补充：两段经历中最能证明岗位匹配的个人结果]。", "missing_facts": ["两段经历中最能证明岗位匹配的个人结果"], "provenance": [{"claim": "参与晨光阅读新用户增长、数据看板及校园 AI 写作助手", "source_anchor": "[00:01:13–00:03:25]"}, {"claim": "负责需求梳理、原型、PRD 和研发跟进", "source_anchor": "[00:03:36–00:05:10]; [00:13:33–00:14:12]"}]},
+    {"question_id": "Q02", "recommended_structure": ["问题与证据", "个人动作", "结果与证据边界"], "suggested_answer": "我选择晨光阅读的新用户激活项目。团队发现新用户留存不好后上线了新手任务；我负责需求梳理、画原型和跟研发上线。上线后任务完成率为 42%，D1 从 24% 到 28%，但因为没有 A/B，这只能说明同期变化，不能严格证明因果。", "missing_facts": [], "provenance": [{"claim": "个人动作及 42%、24% 到 28% 的结果", "source_anchor": "[00:03:36–00:05:10]"}, {"claim": "未做 A/B", "source_anchor": "[00:10:26–00:11:18]"}]},
+    {"question_id": "Q02.1", "recommended_structure": ["说明当时目标", "给出现有优先级依据", "承认缺少的比较标准"], "suggested_answer": "当时团队优先处理新用户留存，因为老板关注这一指标，也认为新用户留不下来会影响后续付费。不过现有材料没有记录我们如何比较其他问题的影响和投入，[这里需要补充：优先级评分、机会规模或资源比较]。", "missing_facts": ["优先级评分、机会规模或资源比较"], "provenance": [{"claim": "老板关注留存且认为会影响后续付费", "source_anchor": "[00:05:21–00:06:02]"}]},
+    {"question_id": "Q02.2", "recommended_structure": ["先给漏斗证据", "再给访谈证据", "说明证据限制"], "suggested_answer": "我们先看漏斗，发现约六成注册用户没有完成首次阅读；随后访谈了约七八位用户，得到“不知道先看什么”的反馈，因此把问题定位到首次阅读引导。但具体数据窗口我当时没有记清，[这里需要补充：数据周期、样本定义和内容供给对照证据]。", "missing_facts": ["数据周期、样本定义和内容供给对照证据"], "provenance": [{"claim": "漏斗、访谈和用户反馈", "source_anchor": "[00:06:14–00:08:02]"}]},
+    {"question_id": "Q02.2.1", "recommended_structure": ["指标定义", "样本与窗口", "可信度边界"], "suggested_answer": "现有数据是约六成注册用户未完成首次阅读，访谈样本约七八人；数据由数据同学提供，我只记得可能是当周新用户。准确口径和窗口我不能确认，[这里需要补充：SQL/看板定义、时间窗口和样本量]。", "missing_facts": ["SQL/看板定义、时间窗口和样本量"], "provenance": [{"claim": "六成、七八人及窗口不确定", "source_anchor": "[00:07:17–00:08:02]"}]},
+    {"question_id": "Q02.3", "recommended_structure": ["列候选方案", "说明当前选择理由", "补充未完成的 trade-off"], "suggested_answer": "当时考虑过新手任务、推荐优化和新人书单。选择新手任务的现有理由是开发较快、资源有限；但我们没有留下完整的方案比较，[这里需要补充：各方案的用户影响、成本、风险和验证周期]。", "missing_facts": ["各方案的用户影响、成本、风险和验证周期"], "provenance": [{"claim": "三个方案及资源限制", "source_anchor": "[00:08:14–00:09:05]"}]},
+    {"question_id": "Q02.4", "recommended_structure": ["主指标", "护栏指标", "归因限制"], "suggested_answer": "我们观察了任务完成率、D1 和 DAU：完成率 42%，D1 从 24% 到 28%，DAU 没有明显变化。后续还发现 D7 没涨、付费从 2.1% 降到 1.8%。因此不能只凭 D1 判断项目有效，还需要实验和护栏指标。", "missing_facts": [], "provenance": [{"claim": "完成率、D1 与 DAU", "source_anchor": "[00:09:16–00:10:12]"}, {"claim": "D7 与付费异常", "source_anchor": "[00:11:31–00:12:28]"}]},
+    {"question_id": "Q02.4.1", "recommended_structure": ["承认无法严格归因", "列替代解释", "给出重做实验"], "suggested_answer": "这次是全量上线，没有做 A/B，因此只能说明 D1 与上线同期上涨，不能严格证明因果。[这里需要补充：同期活动、渠道和版本变化]。如果重做，我会设置对照组，同时观察 D1、D7 和付费护栏。", "missing_facts": ["同期活动、渠道和版本变化"], "provenance": [{"claim": "全量上线且没有 A/B", "source_anchor": "[00:10:26–00:11:18]"}, {"claim": "重做时会做 A/B 并观察 D7 和付费", "source_anchor": "[00:14:26–00:15:15]"}]},
+    {"question_id": "Q02.5", "recommended_structure": ["先列异常", "说明原判断", "区分事实与未验证假设"], "suggested_answer": "上线后的异常是奖励领取率高，但首次阅读没有同比增加；D7 没有明显上涨，付费从 2.1% 降到 1.8%。我当时提出“奖励不够大”，但没有完成验证，所以它只能算假设。", "missing_facts": ["异常数据的分群、显著性和后续验证"], "provenance": [{"claim": "奖励领取、D7、付费及未排期", "source_anchor": "[00:11:31–00:12:28]"}]},
+    {"question_id": "Q02.5.1", "recommended_structure": ["明确未分析", "列可能解释为假设", "给出验证设计"], "suggested_answer": "我当时没有具体分析付费下降，也没有验证“奖励不够大”。用户只为奖励而来和样本波动都只是可能解释。[这里需要补充：付费漏斗分群、显著性、同期变化和验证结果]。", "missing_facts": ["付费漏斗分群、显著性、同期变化和验证结果"], "provenance": [{"claim": "未具体分析且未继续跟进", "source_anchor": "[00:12:42–00:13:18]"}]},
+    {"question_id": "Q02.6", "recommended_structure": ["先界定个人职责", "明确非个人决策", "补充可证明的个人影响"], "suggested_answer": "方案由团队共同讨论，关键决策由产品经理带领确定。我的个人职责是画原型、写 PRD 和跟进开发；现有材料不能证明我独立做了关键产品决策。[这里需要补充：我提出并被采用的具体判断或取舍]。", "missing_facts": ["个人提出并被采用的具体判断或取舍"], "provenance": [{"claim": "个人职责及关键决策归属", "source_anchor": "[00:13:33–00:14:12]"}]},
+    {"question_id": "Q02.7", "recommended_structure": ["指出原项目证据缺口", "给出重做实验", "定义护栏与方案比较"], "suggested_answer": "如果重做，我会先设计 A/B，并同时观察 D1、D7 和付费；奖励可以分层，在完成阅读后再发更多积分。推荐优化和新人书单哪个更好，需要先基于数据比较，不能直接下结论。", "missing_facts": ["A/B 分流、样本量和方案选择标准"], "provenance": [{"claim": "A/B、D7、付费和分层奖励", "source_anchor": "[00:14:26–00:15:15]"}]},
+    {"question_id": "Q03", "recommended_structure": ["定义 First Success", "拆解输入到生成链路", "说明评估与恢复"], "suggested_answer": "我的建议是先把第一次生成成功定义为[这里需要补充：用户行为与质量标准]，再拆解输入完整度、生成质量、重试和编辑成本。可以把输入引导和模型能力作为假设，但当前材料没有真实评估或上线经验，不能写成已完成事实。", "missing_facts": ["First Success 行为与质量标准", "真实评估或上线经验"], "provenance": [{"claim": "候选人提出输入引导和模型能力", "source_anchor": "[00:15:29–00:16:32]"}]},
+    {"question_id": "Q03.1", "recommended_structure": ["给出可测成功定义", "列失败类型", "设计 recovery 指标"], "suggested_answer": "这是方案建议：我会把成功拆成生成质量和用户行为两层，并观察首次采纳、重试、编辑和放弃。[这里需要补充：产品当前质量标准和基线]。失败后可提供重试或模板，但还要按失败原因选择恢复路径。", "missing_facts": ["产品当前质量标准和基线"], "provenance": [{"claim": "候选人提出重新生成和模板", "source_anchor": "[00:16:46–00:17:20]"}]},
+    {"question_id": "Q04", "recommended_structure": ["先定位下滑分群和行为断点", "提出 retention driver 假设", "再选择策略并实验"], "suggested_answer": "这是方案建议：我不会先默认使用 Push 或积分，而会先按[这里需要补充：用户分群]定位 D7 前没有完成的核心价值行为，再提出 retention driver 假设，并用实验验证召回或产品改动的增量效果。", "missing_facts": ["用户分群、行为断点和留存基线"], "provenance": [{"claim": "原回答提出 Push、签到、积分和邀请", "source_anchor": "[00:17:35–00:18:28]"}]},
+    {"question_id": "Q04.1", "recommended_structure": ["定义持续价值", "区分奖励和真实驱动力", "给出验证方法"], "suggested_answer": "奖励和 AI 新鲜感目前都只是候选假设，不能直接认定为 retention driver。我会先观察留存用户是否持续完成创作、编辑或发布等核心行为，再通过分群与实验验证。[这里需要补充：真实用户行为数据]。", "missing_facts": ["真实用户行为数据"], "provenance": [{"claim": "原回答把奖励和 AI 新鲜感作为可能驱动", "source_anchor": "[00:18:39–00:19:16]"}]}
+  ],
   "key_answer_reviews": [
     {
       "question_id": "Q02.4.1",
@@ -43,9 +79,7 @@
       "overall_score": 4.6,
       "gap_type": "Evidence",
       "root_causes": ["RC-CAUSAL-LEAP", "RC-NO-VALIDATION"],
-      "recommended_structure": ["先承认全量上线无法严格归因", "列出可排除的替代解释", "说明下一次 A/B 与 guardrail 设计"],
-      "suggested_answer": "这次全量上线只能说明 D1 与上线同期上涨，不能严格证明因果。[这里需要补充：同期活动、渠道与版本变化]。如果重做，我会用 A/B，并同时观察 D1、D7 和付费 guardrail。",
-      "provenance": ["[00:10:26–00:11:18]", "[00:14:26–00:15:15]"]
+      "answer_suggestion_ref": "Q02.4.1"
     },
     {
       "question_id": "Q03",
@@ -55,9 +89,7 @@
       "overall_score": 4.7,
       "gap_type": "Knowledge",
       "root_causes": ["RC-AI-CONCEPTUAL", "RC-AI-NO-EVAL"],
-      "recommended_structure": ["定义 First Success", "拆解 intent-input-generation-evaluation", "设计 retry/edit/fallback 指标"],
-      "suggested_answer": "我会先把第一次生成成功定义为[这里需要补充：用户行为与质量标准]，再拆解输入完整度、生成质量、重试和编辑成本。现有材料没有具体 evaluation 或 failure recovery 经验，不能补写。",
-      "provenance": ["[00:15:29–00:17:20]"]
+      "answer_suggestion_ref": "Q03"
     },
     {
       "question_id": "Q04",
@@ -67,9 +99,7 @@
       "overall_score": 4.2,
       "gap_type": "Capability",
       "root_causes": ["RC-GROWTH-TACTIC", "RC-GROWTH-NO-LOOP"],
-      "recommended_structure": ["先定位 D7 下滑 segment 和行为断点", "提出 retention driver 假设", "再选 trigger/tactic 并设计增量实验"],
-      "suggested_answer": "我不会先默认用 Push 或积分，而会先按[这里需要补充：用户分群]定位 D7 前没有完成的核心价值行为，再验证 retention driver。当前 Transcript 没有该 AI 产品真实用户数据，因此这里只能给分析结构。",
-      "provenance": ["[00:17:35–00:19:16]"]
+      "answer_suggestion_ref": "Q04"
     }
   ],
   "competency_observations": [
@@ -106,6 +136,9 @@
     {"story_id": "chenguang-data-anomaly", "title": "新手任务上线后的留存与付费异常", "type": "Data", "source_question_ids": ["Q02.5", "Q02.5.1"], "evidence_status": "incomplete", "missing_facts": ["付费下降分群与显著性", "奖励机制的验证"]}
   ],
   "reverse_interview": {
+    "exchanges": [
+      {"exchange_id": "RQ01", "question_id": "Q05", "candidate_question": {"speaker": "Candidate", "raw_text": "团队现在最核心的目标和这个岗位会负责的事情是什么？", "anchor": "[00:19:28–00:19:40]"}, "interviewer_answer": {"status": "captured", "speaker": "Interviewer", "raw_text": "我们负责 AI 创作产品的增长，北极星还是创作 DAU，但当前更具体的问题是新用户第一次生成成功率和 D7。这个岗位会参与 onboarding、站内导流和生命周期实验，也要和算法一起定义生成质量评估。我们希望候选人既能看增长漏斗，也能理解从输入、生成、编辑到发布的完整链路，不只是做活动。团队节奏比较快，每周看实验复盘。", "anchor": "[00:19:41–00:20:48]"}}
+    ],
     "candidate_questions": [{"question_id": "Q05", "question": "团队核心目标和岗位负责什么", "anchor": "[00:19:28–00:19:40]"}],
     "facts": [
       {"anchor": "[00:19:41–00:20:48]", "speaker": "Interviewer", "quote": "北极星还是创作 DAU……当前更具体的问题是新用户第一次生成成功率和 D7", "level": "F1", "confidence": "high"},

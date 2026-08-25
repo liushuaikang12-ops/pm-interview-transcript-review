@@ -211,8 +211,29 @@ Result:
 
 The pipeline correctly did not invent speaker identity. It does not claim reliable acoustic diarization, and ASR errors remain possible.
 
+## 10. Stable Front-module Regression
+
+Version 2.1.0 separates factual dialogue, answer suggestions, and reverse-interview exchanges before rendering the report:
+
+```text
+Transcript → schema 1.1 record.json → chapter 0 → chapters 1–16
+```
+
+The simulated fixture now contains 17 question nodes, 16 interviewer-led transcript pairs, 16 answer suggestions, and one candidate-reverse-question exchange. Validation asserts:
+
+- chapter 0 contains the ordered `0.1 / 0.2 / 0.3` modules；
+- every root/follow-up appears exactly once with raw question and raw candidate response；
+- every captured root/follow-up has exactly one answer suggestion and provenance；
+- candidate reverse questions have a paired interviewer response and no Better Answer；
+- chapter 6 references chapter 0.2 instead of duplicating Suggested Answers；
+- chapter 13 extracts information without rewriting the candidate's reverse question；
+- Markdown raw dialogue and suggestions match the structured record；
+- schema 1.0 records remain readable by `interview_os.py`, while new records use schema 1.1。
+
+Result: **PASS** — 16/16 transcript pairs, 16/16 answer suggestions, 1/1 reverse exchange.
+
 ## Final Acceptance
 
-**PASS for Agent Skills format, deterministic scripts, installer, Codex discovery, Claude Code discovery, report structure and behavior regressions.**
+**PASS for Agent Skills format, deterministic scripts, installer, Codex discovery, Claude Code discovery, stable chapter 0 rendering, report structure and behavior regressions.**
 
 **Gemini end-to-end activation remains unverified because the installed client was rejected by Google's account-tier authentication before Agent execution.** OpenCode and Cursor path compatibility is based on their documented discovery locations plus installer tests; those clients were not available for model-level execution in this environment.

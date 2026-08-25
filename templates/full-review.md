@@ -2,21 +2,64 @@
 
 > Source Manifest：列出 Transcript / JD / Resume / Project Docs / History / Outcome。所有推断显式写“推断”。
 
-# 0. 实录与回答建议（前置）
+# 0. 面试实录与回答建议
 
-> 默认先输出，再进入 16 章诊断。逐条来自 Transcript；转写错误要修正并标注（音近专有名词、模型名无法确认处标「录音转写不清」）。
+> 本章必须从通过校验的 `record.json` 渲染，不得边读取 Transcript 边自由改写。原文不润色；只有可靠来源能够确认时才修正 ASR，否则标记「录音转写不清」。
 
-## 实录（Question Transcript）
+## 0.1 面试官提问与候选人回复
 
-面试官：<问题原文>
-[追问] 面试官：<追问原文>
-候选人：<回复>
+### Qxx — Root
 
-## 回答建议（Better Answer）
+- Parent：Root
+- 问题时间：`<question anchor>`
+- 面试官原文：
+  > <verbatim question>
+- 回答时间：`<answer anchor>`
+- 候选人原回复：
+  > <verbatim answer；没有回答时写 No answer captured>
 
-> 只使用 Transcript/简历/JD 已有事实，缺口写 `[这里需要补充：…]`，假设题标「建议/假设」。每个回答建议做 provenance check。
+#### Qxx.1 — Follow-up
 
-**回答建议**：<Better Answer>
+- Parent：Qxx（无法确定时写 `Parent uncertain`）
+- 问题时间：`<question anchor>`
+- 面试官原文：
+  > <verbatim follow-up>
+- 回答时间：`<answer anchor>`
+- 候选人原回复：
+  > <verbatim answer；没有回答时写 No answer captured>
+
+> 对账：root/follow-up 节点 n；已捕获回复 n；No answer captured n；Parent uncertain n。每个节点在本节有且仅有一次。
+
+## 0.2 回答建议
+
+> 仅覆盖有候选人回答的 root/follow-up；Administrative 与 candidate-reverse-question 不进入本节。只使用 Transcript/简历/JD 已有事实，缺口写 `[这里需要补充：…]`，假设题标「建议/假设」。
+
+### Qxx
+
+- Recommended Structure：
+  1. ...
+- Suggested Answer：
+  > <Better Answer>
+- Missing Facts：
+  - <placeholder；没有则写 None>
+- Provenance Check：
+  - `<atomic claim> → <source anchor>`
+
+> 对账：eligible questions n；answer suggestions n；provenance-complete n。三者必须相等。
+
+## 0.3 候选人反问与面试官回答原文
+
+### RQxx
+
+- 对应 Question ID：Qxx
+- 候选人反问时间：`<candidate anchor>`
+- 候选人反问原文：
+  > <verbatim candidate question>
+- 面试官回答时间：`<interviewer anchor>`
+- 面试官回答原文：
+  > <verbatim interviewer answer；没有回答时写 No answer captured>
+
+> 本节不生成 Better Answer。第 13 章只提取信息与推断，不重复整段原文。
 
 # 1. Executive Summary
 
@@ -88,15 +131,9 @@ PM Evidence Chain：Problem → Evidence → Insight → Decision → Solution �
 ### Root Cause
 `Finding → What happened → Root Cause code → Why it matters`
 
-### Part A — Recommended Structure
-1. ...
-
-### Part B — Suggested Answer
-> 只使用已有事实；缺口写 `[这里需要补充：XXX]`。
-
-### Provenance Check
-- 每个事实 → source anchor
-- Placeholders → list
+### Answer Suggestion Reference
+- 参见：`0.2 / Qxx`
+- 本章不重复 Suggested Answer 或 Provenance Check。
 
 # 7. Evidence & Quotes
 
@@ -163,7 +200,10 @@ Business Model / Market / Competition / Resource Allocation / ROI / Trade-off / 
 # 13. Reverse Interview Intelligence
 
 ## Candidate Questions
-| ID | Question | Quality | Better version（如需） |
+| ID | Question | Answer anchor | Quality |
+|---|---|---|---|
+
+> 候选人问题与面试官回答原文参见 `0.3 / RQxx`；本章不改写反问，也不重复整段原文。
 
 ## Information Revealed
 | Category | Transcript Fact | Anchor | Inference（可选） | Confidence |
