@@ -1,6 +1,6 @@
 # pm-interview-transcript-review
 
-面向 Codex 的产品经理面试复盘 Skill。它能把录音、视频或 Transcript 转换为可验证的问答实录、回答建议和 16 章复盘；完整复盘仅保存在本机，飞书固定知识库只归档不含候选人回答和个人诊断的脱敏版。
+面向 Codex 的产品经理面试复盘 Skill。它能把录音、视频或 Transcript 转换为可验证的问答实录、回答建议和 16 章复盘；本地保留完整原文，飞书固定知识库只删除前置问答中的候选人原回复，同时保留完整 16 章诊断。
 
 ## 最终使用体验
 
@@ -11,7 +11,7 @@
   → 使用当前系统用户自己的 ChatGPT/Codex 额度
   → 本地保存完整私密复盘
   → 生成并验证知识库脱敏版
-  → 写入固定组织知识库（问题、建议、反问信息）
+  → 写入固定组织知识库（脱敏问题实录、建议、反问、完整 16 章诊断）
   → 飞书回复真实文档链接
 ```
 
@@ -98,13 +98,15 @@ python scripts/interview_os.py status
 
 ## 输出结构
 
-自动归档报告在 16 章诊断前增加：
+本地私密报告在 16 章诊断前增加：
 
-- 面试官问题原文；
+- 带可读 Surface Question 标题的面试官问题原文（不会退化成 `root / follow-up`）；
 - 候选人实际回复；
 - 追问与回复；
 - 每个关键问题的回答建议；
 - 候选人反问和面试官回答原文（存在时）。
+
+飞书知识库版沿用相同的问题标题，只在第 1 节确定性删除候选人原回复和回答定位；回答建议、反问及后续完整 16 章诊断（包括评分和个人诊断）均保留。发布前若标题仍只是 `root / follow-up / administrative`、第 1 节仍含候选人回复或 16 章缺失，校验会直接拒绝上传。
 
 之后包含 Executive Summary、Interview Structure、Complete Question Map、Follow-up Trees、Competency Mapping、Key Answer Reviews、Evidence & Quotes、Shortcoming Cards、Anti-patterns、Project Probe Depth、Role-specific Review（岗位专项复盘）、Interviewer Signals、Reverse Interview Intelligence、Shadow JD、Cross-interview Update 和 Next Interview Actions。
 

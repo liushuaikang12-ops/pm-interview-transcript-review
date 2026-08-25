@@ -119,7 +119,7 @@ Wiki 的 `node_token` 用于生成用户链接；`obj_token` 是底层 Docx 标�
 5. 媒体先经本地 ASR；已有 transcript 不重复 ASR。
 6. 运行当前用户的 `codex exec --ephemeral --sandbox workspace-write`，显式调用 `$pm-interview-transcript-review`。
 7. 要求 Codex 把完整结果写到本地 `review.private.md`，不能只在 stdout 回复摘要。
-8. `validate_review.py --automated` 验证私密全量版后，`build_feishu_review.py` 确定性生成 `review.feishu.md`。知识库版只保留面试官问题/追问、回答建议、候选人反问和面试官回答；删除候选人回答、回答定位、评分和个人诊断。
+8. 在验证私密全量版前，先把裸 `root / follow-up / administrative` 标题按问题原文确定性恢复为 `Qxx/Axx — <Surface Question>`，并同步回答建议标题；`validate_review.py --automated` 通过后，再由 `build_feishu_review.py` 确定性生成 `review.feishu.md`。知识库版只在第 0.1 节删除候选人原回复和回答定位；第 0.2 节回答建议、第 0.3 节反问及面试官回答、后续 1–16 章完整保留。若标题仍不可读、前置问答仍泄露候选人回复或 16 章不完整，发布器必须拒绝上传。
 9. 发布器拒绝 Full Review，只接受通过隐私契约校验的 `review.feishu.md`；创建 Wiki Docx 后立即保存 node/obj token，再分批写入 blocks。
 10. 完整分页回读文档 blocks；只有内容和隐私校验都成功后才回复文档链接。
 
@@ -131,7 +131,7 @@ Wiki 的 `node_token` 用于生成用户链接；`obj_token` 是底层 Docx 标�
 
 本地默认保存：问题原文、候选人回复、追问、回答建议、反问原文、面试官回答原文和 16 章复盘。
 
-飞书默认只发布：面试官问题原文与追问、回答建议、候选人反问、面试官回答原文。禁止发布候选人回答正文、回答定位、评分、个人表现诊断、Shortcoming Cards、Anti-patterns 和原始录音。该边界不可通过配置关闭。
+飞书默认发布：第 0.1 节的面试官问题原文与追问（删除候选人原回复和回答定位）、第 0.2 节回答建议、第 0.3 节候选人反问与面试官回答，以及后续完整 1–16 章诊断。评分、个人表现诊断、Shortcoming Cards 和 Anti-patterns 属于后续诊断，允许写入固定组织知识库；原始录音仍禁止上传。第 0.1 节的候选人原回复脱敏边界不可通过配置关闭。
 
 ## 5. 启动与常驻
 
@@ -168,4 +168,4 @@ macOS/Linux 同理：launchd/systemd user service 必须属于完成 `codex logi
 
 ## 7. 验收
 
-用一段不含真实候选人隐私的测试录音执行：发送消息、下载、转写、Codex 生成、脱敏、双版本校验、创建节点、写 blocks、完整分页回读、返回链接。确认本地私密版含完整复盘，而飞书版不含候选人回答与个人诊断；同一消息再次送达时只返回已有链接，不创建第二篇文档。
+用一段不含真实候选人隐私的测试录音执行：发送消息、下载、转写、Codex 生成、脱敏、双版本校验、创建节点、写 blocks、完整分页回读、返回链接。确认本地私密版含完整复盘；飞书版第 1 节不含候选人原回复和回答定位，但后续 1–16 章完整存在；同一消息再次送达时只返回已有链接，不创建第二篇文档。

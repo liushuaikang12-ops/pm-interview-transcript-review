@@ -10,7 +10,7 @@
 
 ## 0.1 面试官提问与候选人回复
 
-### Qxx — Root
+### Qxx — <Surface Question，一句话问题标题>
 
 - Parent：Root
 - 问题时间：`<question anchor>`
@@ -20,7 +20,7 @@
 - 候选人原回复：
   > <verbatim answer；没有回答时写 No answer captured>
 
-#### Qxx.1 — Follow-up
+#### Qxx.1 — <Surface Question，一句话追问标题>
 
 - Parent：Qxx（无法确定时写 `Parent uncertain`）
 - 问题时间：`<question anchor>`

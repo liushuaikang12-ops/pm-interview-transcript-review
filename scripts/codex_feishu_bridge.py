@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from build_feishu_review import build_feishu_review
+from build_feishu_review import build_feishu_review, normalize_question_headings
 from feishu_common import (
     ConfigurationError,
     feishu_config,
@@ -146,6 +146,8 @@ def process_downloaded(
         "The report must begin with the interviewer's original questions, follow-ups, candidate replies, "
         "and evidence-grounded answer suggestions; preserve candidate reverse questions and the interviewer's "
         "original replies when present; then include all numbered 16 Full Review chapters. "
+        "Every Q/A heading must use `Qxx — <meaningful surface question>` or "
+        "`Axx — <meaningful surface question>`; never use root, follow-up, or administrative as the title. "
         "Do not invent missing facts. Do not publish externally yourself. "
         "Finish only after the file exists and you have checked its structure."
     )
@@ -168,7 +170,10 @@ def process_downloaded(
     )
     if not private_review.exists():
         raise RuntimeError("Codex completed without creating review.private.md")
-    private_text = private_review.read_text(encoding="utf-8-sig")
+    private_text = normalize_question_headings(
+        private_review.read_text(encoding="utf-8-sig")
+    )
+    private_review.write_text(private_text, encoding="utf-8")
     errors = validate(private_text, automated=True)
     if errors:
         raise RuntimeError("generated review failed validation: " + "; ".join(errors))

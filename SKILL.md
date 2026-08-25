@@ -271,7 +271,7 @@ Executive Summary 必须给“最大优势、最大风险、最可能在下一�
 
 第 0 章严格分为三个子模块：
 
-1. `0.1 面试官提问与候选人回复`：每个 `root / follow-up` 节点按 Q ID 输出问题 anchor、面试官原文、回答 anchor、候选人原回复；追问紧跟所属 Root。无回答写 `No answer captured`，不得省略。
+1. `0.1 面试官提问与候选人回复`：每个 `root / follow-up` 节点按 `Qxx — <Surface Question>` 输出有意义的一句话问题标题、问题 anchor、面试官原文、回答 anchor、候选人原回复；不得把 `root / follow-up / administrative` 当作标题。追问紧跟所属 Root。无回答写 `No answer captured`，不得省略。
 2. `0.2 回答建议`：覆盖每个有候选人回答的 `root / follow-up` 节点，按同一 Q ID 输出 Recommended Structure、Suggested Answer、Missing Facts 与 Provenance Check。
 3. `0.3 候选人反问`：按 `RQxx` 输出候选人反问原文和对应的面试官回答原文；无回答写 `No answer captured`。不得为反问生成 Better Answer。
 
@@ -283,14 +283,14 @@ Full Review 中，第 0.2 节展示回答建议，第 6 章只做关键回答诊
 
 ### Codex + 飞书自动归档
 
-当任务来自已配置的飞书机器人时，必须生成两个文件：本地 `review.private.md` 保存「完整实录 + 回答建议 + 16 章诊断」，飞书只发布由确定性脚本生成并校验的 `review.feishu.md`。知识库版仅保留面试官问题/追问、回答建议、候选人反问与面试官回答；删除候选人回答正文、回答定位、评分和个人表现诊断。读取 `references/codex-feishu-automation.md`，遵守以下不变量：
+当任务来自已配置的飞书机器人时，必须生成两个文件：本地 `review.private.md` 保存「完整实录 + 回答建议 + 16 章诊断」，飞书只发布由确定性脚本生成并校验的 `review.feishu.md`。知识库版的脱敏范围只限第 0.1 节：删除候选人原回复和回答定位；第 0.2 节回答建议、第 0.3 节反问及面试官回答、后续 1–16 章完整复盘均保留。读取 `references/codex-feishu-automation.md`，遵守以下不变量：
 
 - 每位管理员在自己的系统账户中运行 `codex login`；桥接程序只能调用该账户下的 `codex exec`，不得携带组织共享 OpenAI API Key。
 - 每位管理员配置自己的飞书 App ID/Secret；Secret 只从环境变量读取，不写入 Skill、配置文件、报告或日志。
 - 归档目标固定为 `vcnvx4cwol1n.feishu.cn` 的知识库 `7677796340709133492` 根目录；不得改投其他空间，创建文档前仍必须验证当前应用确实有读写权限。
 - 指定群/私聊中的录音视为管理员部署时的一次性自动处理授权；其他会话不得自动处理。
 - 使用飞书 `message_id + file_key` 幂等，重试不得重复建文档。
-- `publish_feishu_wiki.py` 只能接受通过知识库隐私契约校验的脱敏版，不能用参数绕过并上传 Full Review。
+- `publish_feishu_wiki.py` 只能接受通过知识库隐私契约校验的知识库版，不能用参数绕过并直接上传含第 0.1 节候选人原回复的 Full Review。
 - 本地 ASR 与 Codex 复盘成功不等于归档成功；必须回读知识库节点和文档块后才能回复最终链接。
 - 默认不上传原始录音；只发布验证通过的复盘文档和配置允许的 transcript。
 
@@ -334,6 +334,7 @@ Full Review 中，第 0.2 节展示回答建议，第 6 章只做关键回答诊
 - [ ] Speaker 不确定处标 Unknown。
 - [ ] Pass 1 问题数与 Follow-up Tree 节点可对账，未把追问全部平铺。
 - [ ] 每个 root/follow-up 都有原问题、anchor、候选人原回复或 `No answer captured`。
+- [ ] 每个 Q/A 标题都包含可读的 Surface Question，不得只显示 `root / follow-up / administrative`。
 - [ ] 每个可回答节点在第 0.2 节有且仅有一条回答建议；Administrative 与候选人反问没有 Better Answer。
 - [ ] 每条候选人反问都与面试官回答原文或 `No answer captured` 配对。
 - [ ] 每条重大 finding 有 timestamp/Q&A Evidence。
@@ -348,4 +349,4 @@ Full Review 中，第 0.2 节展示回答建议，第 6 章只做关键回答诊
 - [ ] Next Actions 数量少、动作具体、完成标准可验证。
 - [ ] 自动归档任务使用当前系统用户自己的 ChatGPT/Codex 登录，没有共享 OpenAI Key。
 - [ ] 飞书任务通过 `message_id + file_key` 去重，写入后已回读验证并返回真实链接。
-- [ ] 本地存在 `review.private.md`，飞书发布源是 `review.feishu.md`；知识库版无候选人回答、回答定位、评分或个人诊断。
+- [ ] 本地存在 `review.private.md`，飞书发布源是 `review.feishu.md`；知识库版第 1 节无候选人原回复和回答定位，同时完整保留后续 1–16 章诊断。

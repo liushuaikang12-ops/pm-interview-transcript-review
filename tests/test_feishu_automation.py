@@ -14,7 +14,11 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from build_feishu_review import build_feishu_review, validate_feishu_review  # noqa: E402
+from build_feishu_review import (  # noqa: E402
+    build_feishu_review,
+    normalize_question_headings,
+    validate_feishu_review,
+)
 from codex_feishu_bridge import (  # noqa: E402
     find_codex,
     job_id,
@@ -38,6 +42,9 @@ from publish_feishu_wiki import (  # noqa: E402
     markdown_to_blocks,
     publish,
     replace_blocks,
+    replace_existing,
+    sha256,
+    verify_replacement,
     verify_blocks,
 )
 from validate_review import validate  # noqa: E402
@@ -123,7 +130,7 @@ class FakeResponse:
 
 
 class FeishuAutomationTests(unittest.TestCase):
-    def test_feishu_edition_removes_candidate_answers_and_private_diagnostics(self) -> None:
+    def test_feishu_edition_redacts_front_answers_and_preserves_diagnostics(self) -> None:
         private = """# 0. 面试实录与回答建议
 
 ## 0.1 面试官提问与候选人回复
@@ -151,9 +158,23 @@ class FeishuAutomationTests(unittest.TestCase):
 
 # 1. Executive Summary
 - Overall Performance: 4/10
+# 2. Interview Structure
+# 3. Complete Question Map
+# 4. Follow-up Trees
+# 5. Competency Mapping
 # 6. Key Answer Reviews
 ### Candidate Answer — Clean Version
 PRIVATE DIAGNOSIS
+# 7. Evidence & Quotes
+# 8. Shortcoming Cards
+# 9. Anti-patterns
+# 10. Project Probe Depth
+# 11. Role-specific Review
+# 12. Interviewer Signals
+# 13. Reverse Interview Intelligence
+# 14. Shadow JD
+# 15. Cross-interview Update
+# 16. Next Interview Actions
 """
         public = build_feishu_review(private)
         self.assertEqual(validate_feishu_review(public), [])
@@ -162,9 +183,95 @@ PRIVATE DIAGNOSIS
         self.assertIn("团队目标是什么", public)
         self.assertIn("关注创作工具增长", public)
         self.assertNotIn("PRIVATE ANSWER", public)
-        self.assertNotIn("PRIVATE DIAGNOSIS", public)
-        self.assertNotIn("Overall Performance", public)
-        self.assertNotIn("候选人原回复", public)
+        self.assertIn("PRIVATE DIAGNOSIS", public)
+        self.assertIn("Overall Performance", public)
+        self.assertIn("# 16. Next Interview Actions", public)
+        question_section = public.split("## 1. 面试官问题与追问", 1)[1].split("## 2. 回答建议", 1)[0]
+        self.assertNotIn("候选人原回复", question_section)
+        self.assertIn("### Q01 — 请介绍项目", public)
+        self.assertNotIn("### Q01 — Root", public)
+
+    def test_generic_question_titles_are_recovered_and_synced(self) -> None:
+        private = """# 0. 实录与回答建议
+
+## 0.1 面试官提问与候选人回复
+
+### Q01 · root
+- Question anchor：[00:01–00:02]
+> 那先辛苦你花五分钟时间 帮我做个简单的自我介绍吧
+- Answer anchor：[00:02–00:10]
+> PRIVATE ANSWER
+
+### Q01.1 · follow-up
+- Question anchor：[00:10–00:12]
+> 你在这个项目里的个人贡献具体是什么
+- Answer anchor：[00:12–00:20]
+> PRIVATE ANSWER 2
+
+## 0.2 回答建议
+
+### Q01
+> 建议一
+
+### Q01.1
+> 建议二
+
+## 0.3 候选人反问
+
+# 1. Executive Summary
+# 2. Interview Structure
+# 3. Complete Question Map
+# 4. Follow-up Trees
+# 5. Competency Mapping
+# 6. Key Answer Reviews
+# 7. Evidence & Quotes
+# 8. Shortcoming Cards
+# 9. Anti-patterns
+# 10. Project Probe Depth
+# 11. Role-specific Review
+# 12. Interviewer Signals
+# 13. Reverse Interview Intelligence
+# 14. Shadow JD
+# 15. Cross-interview Update
+# 16. Next Interview Actions
+"""
+        normalized = normalize_question_headings(private)
+        self.assertIn("### Q01 — 先辛苦你花五分钟时间 帮我做个简单的自我介绍吧", normalized)
+        self.assertIn("### Q01.1 — 你在这个项目里的个人贡献具体是什么", normalized)
+        self.assertEqual(normalized.count("Q01 — 先辛苦你花五分钟时间 帮我做个简单的自我介绍吧"), 2)
+        public = build_feishu_review(private)
+        self.assertEqual(validate_feishu_review(public), [])
+        self.assertNotIn("· root", public)
+        self.assertNotIn("· follow-up", public)
+
+    def test_privacy_validator_rejects_structural_question_titles(self) -> None:
+        invalid = """# 面试问题与回答建议（知识库脱敏版）
+## 1. 面试官问题与追问
+### Q01 — Root
+> 请介绍项目
+## 2. 回答建议
+### Q01 — Root
+> 建议
+## 3. 候选人反问与面试官回答原文
+# 1. Executive Summary
+# 2. Interview Structure
+# 3. Complete Question Map
+# 4. Follow-up Trees
+# 5. Competency Mapping
+# 6. Key Answer Reviews
+# 7. Evidence & Quotes
+# 8. Shortcoming Cards
+# 9. Anti-patterns
+# 10. Project Probe Depth
+# 11. Role-specific Review
+# 12. Interviewer Signals
+# 13. Reverse Interview Intelligence
+# 14. Shadow JD
+# 15. Cross-interview Update
+# 16. Next Interview Actions
+"""
+        errors = validate_feishu_review(invalid)
+        self.assertTrue(any("meaningful title" in error for error in errors))
 
     def test_publisher_rejects_private_full_review_and_accepts_sanitized_dry_run(self) -> None:
         private = (ROOT / "examples/test-run-output.md").read_text(encoding="utf-8-sig")
@@ -302,6 +409,58 @@ PRIVATE DIAGNOSIS
                 {"start_index": 0, "end_index": 21},
             ],
         )
+
+    def test_replacement_verification_accepts_feishu_text_run_splitting(self) -> None:
+        replacement = markdown_to_blocks("# 标题\n\n" + "长文本" * 180)
+        api = MutableDocumentAPI(0)
+        api.children = json.loads(json.dumps(replacement))
+        elements = api.children[1]["text"]["elements"]
+        content = elements[0]["text_run"]["content"]
+        elements[:] = [
+            {"text_run": {"content": content[:300], "text_element_style": {}}},
+            {"text_run": {"content": content[300:], "text_element_style": {}}},
+        ]
+        self.assertEqual(
+            verify_replacement(api, "doc id", replacement),
+            len(replacement) + 1,
+        )
+
+    def test_replacement_started_manifest_recovers_without_rewriting(self) -> None:
+        private = (ROOT / "examples/test-run-output.md").read_text(encoding="utf-8-sig")
+        public = build_feishu_review(private)
+        with tempfile.TemporaryDirectory() as folder:
+            review = Path(folder) / "review.feishu.md"
+            manifest = Path(folder) / "publication.json"
+            review.write_text(public, encoding="utf-8")
+            blocks = markdown_to_blocks(public)
+            api = MutableDocumentAPI(0)
+            api.children = json.loads(json.dumps(blocks))
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "status": "replacement-started",
+                        "space_id": FIXED_WIKI_SPACE_ID,
+                        "node_token": "node",
+                        "obj_token": "obj",
+                        "block_count": 10,
+                        "replacement_source_sha256": sha256(review),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with (
+                patch("publish_feishu_wiki.require_feishu_credentials", return_value=("app", "secret")),
+                patch("publish_feishu_wiki.FeishuAPI", return_value=api),
+                patch("publish_feishu_wiki.load_config", return_value={}),
+                patch(
+                    "publish_feishu_wiki.feishu_config",
+                    return_value={"space_id": FIXED_WIKI_SPACE_ID},
+                ),
+            ):
+                result = replace_existing(review, "title", manifest_path=manifest)
+            self.assertEqual(result["status"], "verified")
+            self.assertTrue(result["replacement_recovered"])
+            self.assertFalse(any(method in {"POST", "DELETE"} for method, _, _ in api.calls))
 
     def test_delete_rejects_unsafe_batch_size(self) -> None:
         with self.assertRaises(ValueError):

@@ -258,6 +258,28 @@ def _text_runs(value: Any) -> list[str]:
     return results
 
 
+def _block_texts(blocks: list[dict[str, Any]]) -> list[str]:
+    """Compare text per block; Feishu may split one submitted run into several runs."""
+    return ["".join(_text_runs(block)) for block in blocks]
+
+
+def verify_replacement(
+    api: FeishuAPI,
+    document_id: str,
+    blocks: list[dict[str, Any]],
+) -> int:
+    actual = list_blocks(api, document_id)
+    expected_count = len(blocks) + 1
+    if len(actual) != expected_count:
+        raise FeishuAPIError(
+            "post-replacement verification block count differed: "
+            f"expected {expected_count}, got {len(actual)}"
+        )
+    if _block_texts(actual[1:]) != _block_texts(blocks):
+        raise FeishuAPIError("post-replacement verification text payload differed")
+    return len(actual)
+
+
 def replace_blocks(
     api: FeishuAPI,
     document_id: str,
@@ -266,18 +288,7 @@ def replace_blocks(
     """Replace one existing document in place and verify its exact text payload."""
     removed = delete_direct_children(api, document_id)
     append_blocks(api, document_id, blocks)
-    actual = list_blocks(api, document_id)
-    expected_count = len(blocks) + 1
-    if len(actual) != expected_count:
-        raise FeishuAPIError(
-            "post-replacement verification block count differed: "
-            f"expected {expected_count}, got {len(actual)}"
-        )
-    expected_text = _text_runs(blocks)
-    actual_text = _text_runs(actual[1:])
-    if actual_text != expected_text:
-        raise FeishuAPIError("post-replacement verification text payload differed")
-    return removed, len(actual)
+    return removed, verify_replacement(api, document_id, blocks)
 
 
 def verify_blocks(
@@ -340,6 +351,27 @@ def replace_existing(
     # Destructive requests are deliberately not retried: an ambiguous retry could
     # remove a second batch after Feishu already applied the first request.
     api = FeishuAPI(app_id, app_secret, max_attempts=1)
+    if existing.get("status") == "replacement-started":
+        if existing.get("replacement_source_sha256") != source_hash:
+            raise ValueError(
+                "replacement-started manifest targets different content; inspect before retry"
+            )
+        verified_blocks = verify_replacement(api, obj_token, blocks)
+        completed = {
+            **existing,
+            "status": "verified",
+            "source": str(review),
+            "source_sha256": source_hash,
+            "title": resolved_title,
+            "privacy_safe": True,
+            "block_count": len(blocks),
+            "verified_block_count": verified_blocks,
+            "replaced_block_count": int(existing.get("block_count", 0)),
+            "replacement_recovered": True,
+            "verified_at": now_iso(),
+        }
+        atomic_json(manifest_path, completed)
+        return completed
     started = {
         **existing,
         "status": "replacement-started",
