@@ -14,7 +14,14 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from codex_feishu_bridge import find_codex, job_id, personal_codex_env, run_bridge  # noqa: E402
+from build_feishu_review import build_feishu_review, validate_feishu_review  # noqa: E402
+from codex_feishu_bridge import (  # noqa: E402
+    find_codex,
+    job_id,
+    personal_codex_env,
+    process_downloaded,
+    run_bridge,
+)
 from feishu_common import (  # noqa: E402
     FIXED_TENANT_DOMAIN,
     FIXED_WIKI_SPACE_ID,
@@ -28,6 +35,7 @@ from publish_feishu_wiki import (  # noqa: E402
     append_blocks,
     create_wiki_node,
     markdown_to_blocks,
+    publish,
     verify_blocks,
 )
 from validate_review import validate  # noqa: E402
@@ -85,6 +93,95 @@ class FakeResponse:
 
 
 class FeishuAutomationTests(unittest.TestCase):
+    def test_feishu_edition_removes_candidate_answers_and_private_diagnostics(self) -> None:
+        private = """# 0. 面试实录与回答建议
+
+## 0.1 面试官提问与候选人回复
+
+### Q01 — Root
+- 问题 anchor：[00:01–00:02]
+**面试官原文**
+> 请介绍项目
+- 回答 anchor：[00:02–00:10]
+- 状态：captured
+- Speaker：Candidate
+**候选人原回复**
+> PRIVATE ANSWER
+
+## 0.2 回答建议
+
+### Q01
+> 建议先讲目标，再讲决策。
+
+## 0.3 候选人反问
+
+### RQ01
+- 候选人反问原文：团队目标是什么？
+- 面试官回答原文：关注创作工具增长。
+
+# 1. Executive Summary
+- Overall Performance: 4/10
+# 6. Key Answer Reviews
+### Candidate Answer — Clean Version
+PRIVATE DIAGNOSIS
+"""
+        public = build_feishu_review(private)
+        self.assertEqual(validate_feishu_review(public), [])
+        self.assertIn("请介绍项目", public)
+        self.assertIn("建议先讲目标", public)
+        self.assertIn("团队目标是什么", public)
+        self.assertIn("关注创作工具增长", public)
+        self.assertNotIn("PRIVATE ANSWER", public)
+        self.assertNotIn("PRIVATE DIAGNOSIS", public)
+        self.assertNotIn("Overall Performance", public)
+        self.assertNotIn("候选人原回复", public)
+
+    def test_publisher_rejects_private_full_review_and_accepts_sanitized_dry_run(self) -> None:
+        private = (ROOT / "examples/test-run-output.md").read_text(encoding="utf-8-sig")
+        public = build_feishu_review(private)
+        with tempfile.TemporaryDirectory() as folder:
+            private_path = Path(folder) / "review.private.md"
+            public_path = Path(folder) / "review.feishu.md"
+            private_path.write_text(private, encoding="utf-8")
+            public_path.write_text(public, encoding="utf-8")
+            with self.assertRaises(ValueError):
+                publish(private_path, "private must fail", dry_run=True)
+            result = publish(public_path, "public", dry_run=True)
+            self.assertEqual(result["status"], "dry-run")
+            self.assertTrue(result["privacy_safe"])
+
+    def test_bridge_keeps_private_review_and_publishes_only_feishu_edition(self) -> None:
+        fixture = (ROOT / "examples/test-run-output.md").read_text(encoding="utf-8-sig")
+        with tempfile.TemporaryDirectory() as folder:
+            job_dir = Path(folder)
+            transcript = job_dir / "transcript.txt"
+            transcript.write_text("test transcript", encoding="utf-8")
+
+            def fake_codex(*_args, **_kwargs):
+                (job_dir / "review.private.md").write_text(fixture, encoding="utf-8")
+
+            with (
+                patch("codex_feishu_bridge.run_checked", side_effect=fake_codex),
+                patch(
+                    "codex_feishu_bridge.publish",
+                    return_value={"status": "verified", "url": "https://example.invalid/wiki/node"},
+                ) as publish_mock,
+            ):
+                process_downloaded(
+                    transcript,
+                    job_dir=job_dir,
+                    codex="codex",
+                    config_file=None,
+                    title="privacy test",
+                )
+
+            self.assertTrue((job_dir / "review.private.md").is_file())
+            public = (job_dir / "review.feishu.md").read_text(encoding="utf-8")
+            self.assertEqual(validate_feishu_review(public), [])
+            published_path = publish_mock.call_args.args[0]
+            self.assertEqual(published_path, job_dir / "review.feishu.md")
+            self.assertTrue(publish_mock.call_args.kwargs["privacy_safe"])
+
     def test_windows_codex_lookup_falls_back_to_user_npm_directory(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             npm = Path(folder) / "npm"
@@ -203,6 +300,15 @@ class FeishuAutomationTests(unittest.TestCase):
                     "feishu": {
                         "tenant_domain": FIXED_TENANT_DOMAIN,
                         "space_id": "another-space",
+                    }
+                }
+            )
+        with self.assertRaises(ConfigurationError):
+            feishu_config(
+                {
+                    "feishu": {
+                        **expected,
+                        "publish_candidate_answers": True,
                     }
                 }
             )

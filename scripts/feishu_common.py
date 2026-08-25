@@ -100,6 +100,10 @@ def feishu_config(config: dict[str, Any]) -> dict[str, Any]:
         raise ConfigurationError(
             f"feishu.space_id must be the fixed organization Wiki {FIXED_WIKI_SPACE_ID}"
         )
+    if value.get("publish_candidate_answers") is True:
+        raise ConfigurationError(
+            "feishu.publish_candidate_answers must remain false for the shared Wiki"
+        )
     return value
 
 

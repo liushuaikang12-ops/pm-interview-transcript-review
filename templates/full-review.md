@@ -1,6 +1,8 @@
 # PM Interview Review — Full Review Template
 
 > Source Manifest：列出 Transcript / JD / Resume / Project Docs / History / Outcome。所有推断显式写“推断”。
+>
+> 隐私边界：本模板生成的是本地私密 Full Review。飞书自动化不得直接发布本文件，必须先生成知识库脱敏版。
 
 # 0. 面试实录与回答建议
 

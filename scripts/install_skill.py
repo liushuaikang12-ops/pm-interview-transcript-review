@@ -33,6 +33,7 @@ PACKAGE_FILES = (
     "scripts/setup_codex_feishu.py",
     "scripts/doctor.py",
     "scripts/validate_review.py",
+    "scripts/build_feishu_review.py",
     "scripts/publish_feishu_wiki.py",
     "scripts/codex_feishu_bridge.py",
     "templates/full-review.md",

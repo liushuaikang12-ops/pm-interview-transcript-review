@@ -1,6 +1,6 @@
 # pm-interview-transcript-review
 
-面向 Codex 的产品经理面试复盘 Skill。它能把录音、视频或 Transcript 转换为可验证的问答实录、回答建议和 16 章复盘；完成个人飞书接入后，可把录音直接发给自己的机器人，自动归档到组织固定知识库。
+面向 Codex 的产品经理面试复盘 Skill。它能把录音、视频或 Transcript 转换为可验证的问答实录、回答建议和 16 章复盘；完整复盘仅保存在本机，飞书固定知识库只归档不含候选人回答和个人诊断的脱敏版。
 
 ## 最终使用体验
 
@@ -9,8 +9,9 @@
   → 本机 faster-whisper 转写
   → 本机 codex exec 调用本 Skill
   → 使用当前系统用户自己的 ChatGPT/Codex 额度
-  → 验证报告结构
-  → 写入固定组织知识库
+  → 本地保存完整私密复盘
+  → 生成并验证知识库脱敏版
+  → 写入固定组织知识库（问题、建议、反问信息）
   → 飞书回复真实文档链接
 ```
 
@@ -53,7 +54,7 @@ python scripts/setup_codex_feishu.py `
   --chat-id "oc_允许自动处理的群ID"
 ```
 
-配置写到 `~/.pm-interview-review-os/config.json`。App Secret 不会写进该文件。
+配置写到 `~/.pm-interview-review-os/config.json`。App Secret 不会写进该文件；`publish_candidate_answers` 固定为 `false`。
 
 ## 接入检查与启动
 
@@ -70,7 +71,7 @@ python scripts/codex_feishu_bridge.py
 - App ID/Secret 能否获取 tenant token；
 - 当前应用能否读取固定知识库。
 
-启动后，直接给自己的机器人发送 `.mp3/.m4a/.wav/.ogg/.mp4/.mov/.mkv/.webm`，或发送 `.md/.txt/.vtt/.srt` Transcript。指定群无需每次 `@机器人`；未加入 allowlist 的群不会触发。
+启动后，直接给自己的机器人发送 `.mp3/.m4a/.wav/.ogg/.mp4/.mov/.mkv/.webm`，或发送 `.md/.txt/.vtt/.srt` Transcript。指定群无需每次 `@机器人`；未加入 allowlist 的群不会触发。任务目录中的 `review.private.md` 是完整本地备份，`review.feishu.md` 才是允许上传的脱敏版。
 
 ## 手动使用
 

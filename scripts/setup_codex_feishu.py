@@ -57,6 +57,7 @@ def main() -> None:
             "dm_enabled": not args.disable_dm,
             "auto_publish": True,
             "include_raw_audio": False,
+            "publish_candidate_answers": False,
         },
     }
     atomic_json(destination, config)

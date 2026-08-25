@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from build_feishu_review import validate_feishu_review
 from feishu_common import (
     FeishuAPI,
     FeishuAPIError,
@@ -20,7 +21,6 @@ from feishu_common import (
     require_feishu_credentials,
     wiki_url,
 )
-from validate_review import validate
 
 BLOCK_TYPES = {
     "text": 2,
@@ -225,10 +225,13 @@ def publish(
     manifest_path: Path | None = None,
     dry_run: bool = False,
     force_new: bool = False,
+    privacy_safe: bool = True,
 ) -> dict[str, Any]:
     review = review.expanduser().resolve()
     content = review.read_text(encoding="utf-8-sig")
-    errors = validate(content, automated=True)
+    if not privacy_safe:
+        raise ValueError("private Full Reviews cannot be published to the organization Wiki")
+    errors = validate_feishu_review(content)
     if errors:
         raise ValueError("review validation failed: " + "; ".join(errors))
     blocks = markdown_to_blocks(content)
@@ -249,6 +252,7 @@ def publish(
             "title": title,
             "source_sha256": source_hash,
             "block_count": len(blocks),
+            "privacy_safe": privacy_safe,
         }
     config = load_config(config_file)
     feishu = feishu_config(config)
@@ -265,6 +269,7 @@ def publish(
         "obj_token": obj_token,
         "url": wiki_url(str(feishu["tenant_domain"]), node_token),
         "created_at": now_iso(),
+        "privacy_safe": privacy_safe,
     }
     atomic_json(manifest, partial)
     append_blocks(api, obj_token, blocks)
@@ -300,6 +305,7 @@ def main() -> None:
         manifest_path=Path(args.manifest).expanduser() if args.manifest else None,
         dry_run=args.dry_run,
         force_new=args.force_new,
+        privacy_safe=True,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

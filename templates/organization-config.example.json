@@ -12,6 +12,7 @@
     "allowed_chat_ids": [],
     "dm_enabled": true,
     "auto_publish": true,
-    "include_raw_audio": false
+    "include_raw_audio": false,
+    "publish_candidate_answers": false
   }
 }

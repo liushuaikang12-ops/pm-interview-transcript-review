@@ -4,7 +4,7 @@ description: Review Product Manager interview recordings or transcripts into evi
 license: MIT
 metadata:
   author: liushuaikang12-ops
-  version: "3.0.0"
+  version: "3.1.0"
   short-description: PM 面试录音复盘与飞书知识库自动归档
 ---
 
@@ -260,7 +260,7 @@ Full Review 严格按 `templates/full-review.md` 输出：先生成第 0 章的�
 
 Executive Summary 必须给“最大优势、最大风险、最可能在下一层追问暴露的断点”，并带 Evidence anchor；禁止“总体不错、仍有空间”。总评包含 Overall Performance、Confidence、Strongest Areas、Biggest Risks、Likely Concerns、Positive Signals、Uncertain Areas。不要给无证据的“通过率 xx%”。
 
-默认产出 Markdown；用户要求时再渲染 HTML。长复盘写入工作区文件并在回复中给路径与锋利摘要，不要把所有历史 JSON 倾倒到聊天，也不得因篇幅静默省略问题或章节。
+默认产出 Markdown；用户要求时再渲染 HTML。长复盘写入工作区文件并在回复中给路径与锋利摘要，不要把所有历史 JSON 倾倒到聊天，也不得因篇幅静默省略问题或章节。完整 Full Review 是本地私密文件，不得直接上传组织共享知识库。
 
 生成顺序固定为两阶段：
 
@@ -283,13 +283,14 @@ Full Review 中，第 0.2 节展示回答建议，第 6 章只做关键回答诊
 
 ### Codex + 飞书自动归档
 
-当任务来自已配置的飞书机器人时，默认交付是「实录 + 回答建议 + 16 章诊断」的完整 Markdown，并在通过结构验证后写入组织固定知识库。读取 `references/codex-feishu-automation.md`，遵守以下不变量：
+当任务来自已配置的飞书机器人时，必须生成两个文件：本地 `review.private.md` 保存「完整实录 + 回答建议 + 16 章诊断」，飞书只发布由确定性脚本生成并校验的 `review.feishu.md`。知识库版仅保留面试官问题/追问、回答建议、候选人反问与面试官回答；删除候选人回答正文、回答定位、评分和个人表现诊断。读取 `references/codex-feishu-automation.md`，遵守以下不变量：
 
 - 每位管理员在自己的系统账户中运行 `codex login`；桥接程序只能调用该账户下的 `codex exec`，不得携带组织共享 OpenAI API Key。
 - 每位管理员配置自己的飞书 App ID/Secret；Secret 只从环境变量读取，不写入 Skill、配置文件、报告或日志。
 - 归档目标固定为 `vcnvx4cwol1n.feishu.cn` 的知识库 `7677796340709133492` 根目录；不得改投其他空间，创建文档前仍必须验证当前应用确实有读写权限。
 - 指定群/私聊中的录音视为管理员部署时的一次性自动处理授权；其他会话不得自动处理。
 - 使用飞书 `message_id + file_key` 幂等，重试不得重复建文档。
+- `publish_feishu_wiki.py` 只能接受通过知识库隐私契约校验的脱敏版，不能用参数绕过并上传 Full Review。
 - 本地 ASR 与 Codex 复盘成功不等于归档成功；必须回读知识库节点和文档块后才能回复最终链接。
 - 默认不上传原始录音；只发布验证通过的复盘文档和配置允许的 transcript。
 
@@ -347,3 +348,4 @@ Full Review 中，第 0.2 节展示回答建议，第 6 章只做关键回答诊
 - [ ] Next Actions 数量少、动作具体、完成标准可验证。
 - [ ] 自动归档任务使用当前系统用户自己的 ChatGPT/Codex 登录，没有共享 OpenAI Key。
 - [ ] 飞书任务通过 `message_id + file_key` 去重，写入后已回读验证并返回真实链接。
+- [ ] 本地存在 `review.private.md`，飞书发布源是 `review.feishu.md`；知识库版无候选人回答、回答定位、评分或个人诊断。

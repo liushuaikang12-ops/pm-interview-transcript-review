@@ -118,10 +118,10 @@ Wiki 的 `node_token` 用于生成用户链接；`obj_token` 是底层 Docx 标�
 4. 下载到 `~/.pm-interview-review-os/jobs/<job-id>/`。
 5. 媒体先经本地 ASR；已有 transcript 不重复 ASR。
 6. 运行当前用户的 `codex exec --ephemeral --sandbox workspace-write`，显式调用 `$pm-interview-transcript-review`。
-7. 要求 Codex 把完整结果写到 `review.md`，不能只在 stdout 回复摘要。
-8. `validate_review.py --automated` 验证实录、回答建议和 16 章结构。
-9. 发布器创建 Wiki Docx，立即保存 node/obj token，再分批写入 blocks。
-10. 回读文档 blocks；只有验证成功后才回复文档链接。
+7. 要求 Codex 把完整结果写到本地 `review.private.md`，不能只在 stdout 回复摘要。
+8. `validate_review.py --automated` 验证私密全量版后，`build_feishu_review.py` 确定性生成 `review.feishu.md`。知识库版只保留面试官问题/追问、回答建议、候选人反问和面试官回答；删除候选人回答、回答定位、评分和个人诊断。
+9. 发布器拒绝 Full Review，只接受通过隐私契约校验的 `review.feishu.md`；创建 Wiki Docx 后立即保存 node/obj token，再分批写入 blocks。
+10. 完整分页回读文档 blocks；只有内容和隐私校验都成功后才回复文档链接。
 
 如果节点已创建但正文写入失败，`publication.json` 保留 `node-created` 状态。不得直接再次创建新节点；先人工检查该 manifest 和飞书节点。
 
@@ -129,7 +129,9 @@ Wiki 的 `node_token` 用于生成用户链接；`obj_token` 是底层 Docx 标�
 
 管理员在首次部署时已经明确授权允许群/私聊的录音自动处理和归档，因此每条录音无需再次确认。授权不扩展到其他群、其他文件类型或上传原始录音。
 
-默认发布：问题原文、候选人回复、追问、回答建议、反问原文、面试官回答原文和 16 章复盘。默认不上传原始录音。
+本地默认保存：问题原文、候选人回复、追问、回答建议、反问原文、面试官回答原文和 16 章复盘。
+
+飞书默认只发布：面试官问题原文与追问、回答建议、候选人反问、面试官回答原文。禁止发布候选人回答正文、回答定位、评分、个人表现诊断、Shortcoming Cards、Anti-patterns 和原始录音。该边界不可通过配置关闭。
 
 ## 5. 启动与常驻
 
@@ -166,4 +168,4 @@ macOS/Linux 同理：launchd/systemd user service 必须属于完成 `codex logi
 
 ## 7. 验收
 
-用一段不含真实候选人隐私的测试录音执行：发送消息、下载、转写、Codex 生成、结构验证、创建节点、写 blocks、回读、返回链接。还要确认同一消息再次送达时只返回已有链接，不创建第二篇文档。
+用一段不含真实候选人隐私的测试录音执行：发送消息、下载、转写、Codex 生成、脱敏、双版本校验、创建节点、写 blocks、完整分页回读、返回链接。确认本地私密版含完整复盘，而飞书版不含候选人回答与个人诊断；同一消息再次送达时只返回已有链接，不创建第二篇文档。

@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from build_feishu_review import build_feishu_review
 from feishu_common import (
     ConfigurationError,
     feishu_config,
@@ -136,11 +137,12 @@ def process_downloaded(
             cwd=job_dir,
         )
         transcript = transcript_dir / "transcript.md"
-    review = job_dir / "review.md"
+    private_review = job_dir / "review.private.md"
+    feishu_review = job_dir / "review.feishu.md"
     last_message = job_dir / "codex-last-message.txt"
     prompt = (
         "Use $pm-interview-transcript-review to complete an automated Full Review. "
-        f"The transcript is at {transcript}. Write the complete Markdown report to {review}. "
+        f"The transcript is at {transcript}. Write the complete private Markdown report to {private_review}. "
         "The report must begin with the interviewer's original questions, follow-ups, candidate replies, "
         "and evidence-grounded answer suggestions; preserve candidate reverse questions and the interviewer's "
         "original replies when present; then include all numbered 16 Full Review chapters. "
@@ -164,16 +166,19 @@ def process_downloaded(
         cwd=job_dir,
         env=personal_codex_env(),
     )
-    if not review.exists():
-        raise RuntimeError("Codex completed without creating review.md")
-    errors = validate(review.read_text(encoding="utf-8-sig"), automated=True)
+    if not private_review.exists():
+        raise RuntimeError("Codex completed without creating review.private.md")
+    private_text = private_review.read_text(encoding="utf-8-sig")
+    errors = validate(private_text, automated=True)
     if errors:
         raise RuntimeError("generated review failed validation: " + "; ".join(errors))
+    feishu_review.write_text(build_feishu_review(private_text), encoding="utf-8")
     return publish(
-        review,
+        feishu_review,
         title,
         config_file=config_file,
         manifest_path=job_dir / "publication.json",
+        privacy_safe=True,
     )
 
 
@@ -247,7 +252,10 @@ def run_bridge(config_file: str | None) -> None:
                 dest_dir=folder,
                 file_name=file_name,
             )
-            title = f"{datetime.now().strftime('%Y-%m-%d')} 面试复盘 - {Path(file_name).stem}"
+            title = (
+                f"{datetime.now().strftime('%Y-%m-%d')} "
+                f"面试问题与回答建议 - {Path(file_name).stem}（脱敏版）"
+            )
             published = await asyncio.to_thread(
                 process_downloaded,
                 Path(source),

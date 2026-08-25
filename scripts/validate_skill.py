@@ -45,6 +45,7 @@ REQUIRED_FILES = [
     "scripts/setup_codex_feishu.py",
     "scripts/doctor.py",
     "scripts/validate_review.py",
+    "scripts/build_feishu_review.py",
     "scripts/publish_feishu_wiki.py",
     "scripts/codex_feishu_bridge.py",
     "examples/simulated-transcript.md",
@@ -72,6 +73,7 @@ EXPECTED_PACKAGE_FILES = frozenset(
         "scripts/setup_codex_feishu.py",
         "scripts/doctor.py",
         "scripts/validate_review.py",
+        "scripts/build_feishu_review.py",
         "scripts/publish_feishu_wiki.py",
         "scripts/codex_feishu_bridge.py",
         "templates/full-review.md",
@@ -279,6 +281,11 @@ def main() -> None:
     check("面向 Codex" in readme and ".agents\\skills" in readme, "README lacks current Codex installation instructions", errors)
     check("codex login" in readme and "自己的 ChatGPT" in readme, "README lacks the personal Codex quota boundary", errors)
     check("codex_feishu_bridge.py" in readme and "组织固定知识库" in readme, "README lacks Feishu automation instructions", errors)
+    check(
+        "review.private.md" in readme and "review.feishu.md" in readme,
+        "README lacks the private/local versus privacy-safe Feishu boundary",
+        errors,
+    )
     check(all(title in readme for title in OUTPUT_CHAPTERS), "README does not name all 16 Full Review chapters", errors)
 
     template = (ROOT / "templates/full-review.md").read_text(encoding="utf-8")
@@ -297,7 +304,8 @@ def main() -> None:
     for script in (
         "install_skill.py", "interview_os.py", "transcribe_media.py", "render_review.py",
         "validate_skill.py", "feishu_common.py", "setup_codex_feishu.py", "doctor.py",
-        "validate_review.py", "publish_feishu_wiki.py", "codex_feishu_bridge.py",
+        "validate_review.py", "build_feishu_review.py", "publish_feishu_wiki.py",
+        "codex_feishu_bridge.py",
     ):
         try:
             py_compile.compile(str(ROOT / "scripts" / script), doraise=True)
