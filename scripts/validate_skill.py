@@ -17,22 +17,33 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+SKILL_NAME = "pm-interview-transcript-review"
 REQUIRED_FILES = [
     "SKILL.md",
     "README.md",
     "LICENSE",
+    "agents/openai.yaml",
+    "requirements-feishu.txt",
     "references/scoring-and-diagnosis.md",
     "references/pm-competency-taxonomy.md",
     "references/history-and-calibration.md",
     "references/media-pipeline.md",
+    "references/codex-feishu-automation.md",
     "references/external-design-notes.md",
     "references/test-report.md",
     "templates/full-review.md",
     "templates/interview-record.schema.json",
+    "templates/organization-config.example.json",
     "scripts/install_skill.py",
     "scripts/interview_os.py",
     "scripts/transcribe_media.py",
     "scripts/render_review.py",
+    "scripts/feishu_common.py",
+    "scripts/setup_codex_feishu.py",
+    "scripts/doctor.py",
+    "scripts/validate_review.py",
+    "scripts/publish_feishu_wiki.py",
+    "scripts/codex_feishu_bridge.py",
     "examples/simulated-transcript.md",
     "examples/simulated-jd.md",
     "examples/simulated-resume.md",
@@ -44,13 +55,23 @@ EXPECTED_PACKAGE_FILES = frozenset(
         "SKILL.md",
         "README.md",
         "LICENSE",
+        "agents/openai.yaml",
+        "requirements-feishu.txt",
         "scripts/install_skill.py",
         "scripts/interview_os.py",
         "scripts/transcribe_media.py",
         "scripts/render_review.py",
         "scripts/validate_skill.py",
+        "scripts/feishu_common.py",
+        "scripts/setup_codex_feishu.py",
+        "scripts/doctor.py",
+        "scripts/validate_review.py",
+        "scripts/publish_feishu_wiki.py",
+        "scripts/codex_feishu_bridge.py",
         "templates/full-review.md",
         "templates/interview-record.schema.json",
+        "templates/organization-config.example.json",
+        "references/codex-feishu-automation.md",
         "references/external-design-notes.md",
         "references/history-and-calibration.md",
         "references/media-pipeline.md",
@@ -70,7 +91,6 @@ STANDARD_FRONTMATTER_FIELDS = {
     "name",
     "description",
     "license",
-    "compatibility",
     "metadata",
     "allowed-tools",
 }
@@ -141,8 +161,6 @@ def validate_frontmatter_mapping(frontmatter: dict, directory_name: str, errors:
         "description lacks routing keywords",
         errors,
     )
-    compatibility = frontmatter.get("compatibility", "")
-    check(isinstance(compatibility, str) and 1 <= len(compatibility) <= 500, "compatibility must be a 1-500 character string", errors)
     check(frontmatter.get("license") == "MIT", "license must be MIT", errors)
     check(set(frontmatter).issubset(STANDARD_FRONTMATTER_FIELDS), "frontmatter contains non-standard top-level fields", errors)
     metadata = frontmatter.get("metadata", {})
@@ -209,13 +227,13 @@ def main() -> None:
     check(starts_with_fence and not raw_skill.startswith(b"\xef\xbb\xbf"), "SKILL.md must start with --- at byte 0 and use UTF-8 without BOM", errors)
     skill = raw_skill.decode("utf-8")
     frontmatter = parse_frontmatter(skill, errors)
-    validate_frontmatter_mapping(frontmatter, ROOT.name, errors)
+    validate_frontmatter_mapping(frontmatter, SKILL_NAME, errors)
 
     valid_fixture = dict(frontmatter)
     negative_frontmatter_fixtures = {
-        "empty mapping": ({}, ROOT.name),
+        "empty mapping": ({}, SKILL_NAME),
         "double-hyphen name": ({**valid_fixture, "name": "bad--name"}, "bad--name"),
-        "nested metadata": ({**valid_fixture, "metadata": {"author": {"name": "nested"}}}, ROOT.name),
+        "nested metadata": ({**valid_fixture, "metadata": {"author": {"name": "nested"}}}, SKILL_NAME),
     }
     for label, (fixture, directory_name) in negative_frontmatter_fixtures.items():
         fixture_errors: list[str] = []
@@ -237,7 +255,7 @@ def main() -> None:
         check(f"## {section}" in skill, f"missing SKILL section: {section}", errors)
     for term in ("Follow-up Tree", "Root Cause", "Shortcoming", "Shadow JD", "Outcome Calibration", "AI PM", "Growth PM", "Strategy PM"):
         check(term in skill, f"core concept absent from SKILL.md: {term}", errors)
-    for forbidden in ("HERMES_HOME", "HERMES_SKILL_DIR", "skill_view"):
+    for forbidden in ("skill_view",):
         check(forbidden not in skill, f"vendor-specific runtime dependency remains in SKILL.md: {forbidden}", errors)
 
     expected_chapters = [(str(index), title) for index, title in enumerate(OUTPUT_CHAPTERS, start=1)]
@@ -252,11 +270,10 @@ def main() -> None:
     check(skill_chapters == expected_chapters, "SKILL Output Contract must contain exactly the ordered 16 chapters", errors)
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    check("Agent Skills 开放标准" in readme, "README does not explain the portability standard", errors)
-    check("scripts/install_skill.py" in readme and "--target" in readme, "README lacks portable installation instructions", errors)
-    check("默认交付物" in readme and "review.md" in readme and "record.json" in readme, "README lacks artifact-level output contract", errors)
-    readme_chapters = re.findall(r"^###\s+(\d{1,2})\.\s+(.+?)\s*$", readme, flags=re.MULTILINE)
-    check(readme_chapters == expected_chapters, "README must document exactly the ordered 16 chapters", errors)
+    check("面向 Codex" in readme and ".agents\\skills" in readme, "README lacks current Codex installation instructions", errors)
+    check("codex login" in readme and "自己的 ChatGPT" in readme, "README lacks the personal Codex quota boundary", errors)
+    check("codex_feishu_bridge.py" in readme and "组织固定知识库" in readme, "README lacks Feishu automation instructions", errors)
+    check(all(title in readme for title in OUTPUT_CHAPTERS), "README does not name all 16 Full Review chapters", errors)
 
     template = (ROOT / "templates/full-review.md").read_text(encoding="utf-8")
     template_chapters = re.findall(r"^#\s+([1-9]\d*)\.\s+(.+?)\s*$", template, flags=re.MULTILINE)
@@ -271,7 +288,11 @@ def main() -> None:
     check("No answer captured" in template, "full-review template lacks an explicit unanswered state", errors)
     check("本章不重复 Suggested Answer" in template, "chapter 6 does not de-duplicate Better Answers", errors)
 
-    for script in ("install_skill.py", "interview_os.py", "transcribe_media.py", "render_review.py", "validate_skill.py"):
+    for script in (
+        "install_skill.py", "interview_os.py", "transcribe_media.py", "render_review.py",
+        "validate_skill.py", "feishu_common.py", "setup_codex_feishu.py", "doctor.py",
+        "validate_review.py", "publish_feishu_wiki.py", "codex_feishu_bridge.py",
+    ):
         try:
             py_compile.compile(str(ROOT / "scripts" / script), doraise=True)
         except Exception as exc:
@@ -280,8 +301,8 @@ def main() -> None:
     installer = load_module(ROOT / "scripts" / "install_skill.py", "install_skill_under_test")
     package_files = set(installer.PACKAGE_FILES)
     check(
-        len(installer.PACKAGE_FILES) == 23 and package_files == EXPECTED_PACKAGE_FILES,
-        "installer PACKAGE_FILES must match the immutable 23-file release contract exactly",
+        package_files == EXPECTED_PACKAGE_FILES,
+        "installer PACKAGE_FILES must match the Codex release contract exactly",
         errors,
     )
     check(len(package_files) == len(installer.PACKAGE_FILES), "installer package allowlist contains duplicates", errors)
@@ -302,17 +323,16 @@ def main() -> None:
                 f"wrong user-scope destination for {agent}",
                 errors,
             )
-            if agent != "hermes":
-                project_dir = temp_path / f"project-{agent}"
-                project_args = parser.parse_args(
-                    ["--agent", agent, "--scope", "project", "--project-dir", str(project_dir)]
-                )
-                check(
-                    installer.resolve_destination(project_args)
-                    == installer.project_root(agent, project_dir.absolute()).absolute() / installer.SKILL_NAME,
-                    f"wrong project-scope destination for {agent}",
-                    errors,
-                )
+            project_dir = temp_path / f"project-{agent}"
+            project_args = parser.parse_args(
+                ["--agent", agent, "--scope", "project", "--project-dir", str(project_dir)]
+            )
+            check(
+                installer.resolve_destination(project_args)
+                == installer.project_root(agent, project_dir.absolute()).absolute() / installer.SKILL_NAME,
+                f"wrong project-scope destination for {agent}",
+                errors,
+            )
 
         custom_root = temp_path / "custom-target"
         custom_result = subprocess.run(
@@ -328,31 +348,6 @@ def main() -> None:
             "installer --target did not create the expected skill directory",
             errors,
         )
-        hermes_project_result = subprocess.run(
-            [
-                sys.executable,
-                str(ROOT / "scripts/install_skill.py"),
-                "--agent",
-                "hermes",
-                "--scope",
-                "project",
-                "--project-dir",
-                str(temp_path),
-                "--dry-run",
-            ],
-            cwd=ROOT,
-            text=True,
-            encoding="utf-8",
-            capture_output=True,
-        )
-        check(
-            hermes_project_result.returncode == 2
-            and "Traceback" not in hermes_project_result.stderr
-            and "project-scope discovery is not assumed" in hermes_project_result.stderr,
-            "unsupported Hermes project scope did not produce a clean argparse error",
-            errors,
-        )
-
         destination = temp_path / "skills" / installer.SKILL_NAME
         try:
             installer.install(destination, force=False)
@@ -726,7 +721,7 @@ def main() -> None:
         json.dumps(
             {
                 "status": "PASS",
-                "standard": "Agent Skills",
+                "standard": "Codex Skill",
                 "skill": str(ROOT),
                 "required_files": len(REQUIRED_FILES),
                 "package_files": len(installer.PACKAGE_FILES),
@@ -737,7 +732,7 @@ def main() -> None:
                 "q02_followups": len(q02_descendants),
                 "shortcoming_cards": len(record["shortcoming_cards"]),
                 "installer_smoke_test": True,
-                "portable_workspace": True,
+                "personal_codex_quota": True,
                 "test_run_output_present": expected.exists(),
             },
             ensure_ascii=False,

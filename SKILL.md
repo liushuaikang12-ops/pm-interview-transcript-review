@@ -1,11 +1,11 @@
 ---
 name: pm-interview-transcript-review
-description: Review Product Manager interview recordings or transcripts into evidence-grounded Follow-up Trees, answer diagnostics, Better Answers, Shadow JD, cross-interview trends, and next-round drills. Use for PM, AI PM, Growth PM, or Strategy PM interview debriefs; not for generic meeting summaries.
+description: Review Product Manager interview recordings or transcripts into evidence-grounded question transcripts, Better Answers, Follow-up Trees, diagnostics, Shadow JD, next-round drills, and verified Feishu Wiki documents. Use for PM, AI PM, Growth PM, or Strategy PM interview debriefs and configured Feishu recording automation; not for generic meeting summaries.
 license: MIT
-compatibility: Agent Skills open standard. Core workflow needs file reading and Markdown output; optional scripts need Python 3.10+, and local media transcription additionally needs ffmpeg plus faster-whisper.
 metadata:
   author: liushuaikang12-ops
-  version: "2.1.0"
+  version: "3.0.0"
+  short-description: PM 面试录音复盘与飞书知识库自动归档
 ---
 
 # PM Interview Review OS
@@ -30,6 +30,7 @@ metadata:
 - “恢复追问树 / 诊断回答 / 优化答案”
 - “根据这场面试准备下一轮”
 - “对比最近几场 / 更新面试题库 / 记录面试结果或 HR feedback”
+- 飞书机器人收到面试录音、视频或 transcript，并要求自动复盘归档
 
 不要用于普通会议纪要、模拟面试出题、纯简历改写或与 PM 无关的通用职业面试；这些任务除非用户明确要求套用本 OS。
 
@@ -66,6 +67,7 @@ metadata:
 - PM/AI PM/Growth 标签与 Probe Depth：`references/pm-competency-taxonomy.md`
 - 历史数据库、趋势、Outcome Calibration：`references/history-and-calibration.md`
 - 音视频/ASR：`references/media-pipeline.md`
+- Codex 连接飞书、固定知识库与自动归档：`references/codex-feishu-automation.md`
 - Full Review 格式：`templates/full-review.md`
 - 跨场 JSON 记录：`templates/interview-record.schema.json`
 
@@ -279,7 +281,17 @@ Executive Summary 必须给“最大优势、最大风险、最可能在下一�
 
 Full Review 中，第 0.2 节展示回答建议，第 6 章只做关键回答诊断并引用对应的 `0.2 / Qxx`，不得再次粘贴 Suggested Answer。用户只要备考文档时采用 Mode F：仅输出 Answer Playbook 与下一轮训练，不输出候选人实际回答或 16 章诊断。回答建议只使用 Transcript/简历/JD 已有事实，缺口用 `[这里需要补充：…]` 占位，假设题/设计题标注「建议 / 假设」；每个符合条件的问题都要做 provenance check。候选人反问不做建议改写，只保留原问与面试官回答原文。
 
-完整交付时，用户可能要求把「实录 + 回答建议 + 16 章诊断」整体写入外部文档（飞书等），不要只留工作区文件路径——用户在聊天平台看不到本地路径，务必把内容落地到用户能直接打开的载体。
+### Codex + 飞书自动归档
+
+当任务来自已配置的飞书机器人时，默认交付是「实录 + 回答建议 + 16 章诊断」的完整 Markdown，并在通过结构验证后写入组织固定知识库。读取 `references/codex-feishu-automation.md`，遵守以下不变量：
+
+- 每位管理员在自己的系统账户中运行 `codex login`；桥接程序只能调用该账户下的 `codex exec`，不得携带组织共享 OpenAI API Key。
+- 每位管理员配置自己的飞书 App ID/Secret；Secret 只从环境变量读取，不写入 Skill、配置文件、报告或日志。
+- 组织知识库 `space_id` 与父节点可以预配置，但创建文档前必须验证当前应用确实有读写权限。
+- 指定群/私聊中的录音视为管理员部署时的一次性自动处理授权；其他会话不得自动处理。
+- 使用飞书 `message_id + file_key` 幂等，重试不得重复建文档。
+- 本地 ASR 与 Codex 复盘成功不等于归档成功；必须回读知识库节点和文档块后才能回复最终链接。
+- 默认不上传原始录音；只发布验证通过的复盘文档和配置允许的 transcript。
 
 ## History / Persistence Behavior
 
@@ -333,3 +345,5 @@ Full Review 中，第 0.2 节展示回答建议，第 6 章只做关键回答诊
 - [ ] 单场信号未误写成长期 anti-pattern。
 - [ ] History 从 records 重建，Outcome 不覆写旧预测。
 - [ ] Next Actions 数量少、动作具体、完成标准可验证。
+- [ ] 自动归档任务使用当前系统用户自己的 ChatGPT/Codex 登录，没有共享 OpenAI Key。
+- [ ] 飞书任务通过 `message_id + file_key` 去重，写入后已回读验证并返回真实链接。

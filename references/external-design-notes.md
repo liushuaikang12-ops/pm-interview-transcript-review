@@ -8,7 +8,6 @@
 
 - Repo: https://github.com/CatNum/personal-skills
 - 固定提交: https://github.com/CatNum/personal-skills/tree/49320ede07c9e71b541be1641da2a863f0e17ed9
-- 下列反引号路径均位于上述上游固定提交中，不是本仓库的本地文件。
 - Skill: `skills/interview-transcript-review/SKILL.md`
 - Markdown/HTML templates: `skills/interview-transcript-review/assets/review-template.md` / `.html`
 - Trigger evals: `skills/interview-transcript-review/evals/trigger-eval.json`
@@ -32,7 +31,6 @@
 
 - Repo: https://github.com/noamseg/interview-coach-skill
 - 固定提交: https://github.com/noamseg/interview-coach-skill/tree/634a8dd8689e0420c21e5f0c8ae3cfa9e1a7ab7e
-- 下列反引号路径均位于上述上游固定提交中，不是本仓库的本地文件。
 - Detailed rubrics: `references/rubrics-detailed.md`
 - Analyze workflow: `references/commands/analyze.md`
 - Calibration engine: `references/calibration-engine.md`
@@ -56,7 +54,6 @@
 
 - Repo: https://github.com/raphaotten/claude-interview-coach
 - 固定提交: https://github.com/raphaotten/claude-interview-coach/tree/6cad936fa9eb353272a5fa6fba4f32255e7f05d6
-- 下列反引号路径均位于上述上游固定提交中，不是本仓库的本地文件。
 - Debrief skill: `.claude/skills/debrief/SKILL.md`
 - Mock/history update workflow: `framework/mock-interview.md`
 - Interview summary template: `framework/templates/interview-summary.md`
@@ -114,26 +111,18 @@
 - 本机实际有 ffmpeg 和 faster-whisper，因此实现 `scripts/transcribe_media.py`：输出 WAV、TXT、Markdown、VTT、segments JSON、metadata。
 - faster-whisper 不自带 diarization；初始 speaker 必须是 Unknown，不能把 segment 当人名。
 
-## 6. Agent Skills Open Standard
+## 6. Codex Skill Specification
 
-权威文档：
-
-- Specification: https://agentskills.io/specification
-- Overview: https://agentskills.io/home
-- OpenAI Codex skills: https://developers.openai.com/codex/skills
-- Claude Code skills: https://code.claude.com/docs/en/skills
-- Cursor skills: https://cursor.com/docs/skills
-- OpenCode skills: https://opencode.ai/docs/skills
-- Gemini CLI skills: https://geminicli.com/docs/cli/skills/
+权威文档：https://developers.openai.com/codex/skills
 
 ### 落地决策
 
-1. `SKILL.md` 只使用开放标准 frontmatter：`name`、`description`、`license`、`compatibility` 和字符串 metadata；不依赖任一厂商的专属字段。
+1. 安装到 Codex 当前支持的用户目录 `~/.agents/skills/pm-interview-transcript-review/`。
 2. `SKILL.md` 保持主流程；大块 taxonomy、rubric、history contract 放 `references/`；输出契约放 `templates/`；确定性处理放 `scripts/`。
 3. 使用 progressive disclosure：只在对应模式加载 reference。
-4. Skill directory 通过客户端加载上下文确定，所有资源使用相对路径；不硬编码作者机器或某个 Agent 的安装路径。
-5. Skill 是程序性知识包，不当作运行数据库；逐场数据放 `${PM_INTERVIEW_REVIEW_HOME}` 或默认 `~/.pm-interview-review-os/`，避免 Skill 更新或重装覆盖历史。
-6. 提供 `scripts/install_skill.py` 适配 `.agents/skills`、`.claude/skills`、`.cursor/skills`、`.gemini/skills`、`.opencode/skills` 与 Hermes 用户 Skills 目录；其他客户端使用 `--target`。
+4. `agents/openai.yaml` 提供 Codex UI 与调用元数据；开发验收样例保留在顶层 `examples/`，运行数据不写入 Skill 包。
+5. Skill 是程序性知识包，不当作运行数据库；逐场数据放 `~/.pm-interview-review-os/`，避免 Skill 更新或重装覆盖历史。
+6. Skill 提供 `agents/openai.yaml`，自动化通过当前用户的 `codex exec` 调用，不共享登录或 OpenAI API Key。
 
 ## 7. 本 OS 的新增核心
 

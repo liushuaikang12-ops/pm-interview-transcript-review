@@ -1,20 +1,12 @@
 # Acceptance Test Report
 
-Test dates: 2026-08-14 (behavior baseline), 2026-08-15 (Agent Skills portability migration)
+Test date: 2026-08-14
 
-## 1. Portability Migration Scope
+## Scope
 
-本轮目标不是只改 README，而是把 Skill 从 Hermes-specific package 改为符合 Agent Skills 开放标准的跨客户端包：
+The fixture covers self-introduction, one PM project, 10 follow-up nodes under one root (including nested Q02.2.1 / Q02.4.1 / Q02.5.1), data anomaly, Attribution failure, AI Product question, Growth question, reverse interview and an obvious ownership mistake.
 
-- `SKILL.md` frontmatter 只保留标准字段：`name`、`description`、`license`、`compatibility`、字符串 metadata。
-- 主流程不再依赖 `HERMES_HOME`、`HERMES_SKILL_DIR`、`skill_view` 或某个 Agent 的专属工具名。
-- 历史工作区改为 `${PM_INTERVIEW_REVIEW_HOME}`，默认 `~/.pm-interview-review-os/`。
-- 新增零第三方依赖安装器 `scripts/install_skill.py`。
-- 安装器只复制显式的 23 文件发布白名单，不复制仓库中的任何额外文件。
-- README 明确说明默认文件产物、16 章结构、Answer Playbook、六种模式和证据边界。
-- Role-specific Review 统一覆盖 AI PM、Growth PM、Strategy PM。
-
-## 2. Portable Static / Fixture Contract
+## 1. Static / Fixture Contract
 
 Command:
 
@@ -27,158 +19,64 @@ Final result:
 ```json
 {
   "status": "PASS",
-  "standard": "Agent Skills",
-  "required_files": 20,
-  "package_files": 23,
+  "required_files": 18,
   "questions": 17,
   "q02_followups": 10,
   "shortcoming_cards": 3,
-  "installer_smoke_test": true,
-  "portable_workspace": true,
   "test_run_output_present": true
 }
 ```
 
-Validated:
+Validated: frontmatter, required files, Python syntax, JSON schema, unique Q IDs, valid parents, five-dimensional scores, Evidence, 3–7 Shortcoming Cards, Shadow JD evidence, full 16-chapter output and nested Follow-up Tree.
 
-- UTF-8 `SKILL.md` frontmatter at byte 0；
-- negative fixtures reject double-hyphen names, nested metadata values, UTF-8 BOM, missing template chapters and reordered README chapters；
-- Agent Skills standard fields and metadata string mapping；
-- directory name equals frontmatter `name`；
-- no vendor-specific runtime dependency in `SKILL.md`；
-- README contains install paths, artifact-level output contract and all 16 chapters；
-- required files and Python syntax；
-- JSON Schema and semantic record validation；
-- unique Q IDs, valid parents and nested Follow-up Trees；
-- five-dimensional scores, Evidence, 3–7 Shortcoming Cards and Shadow JD grounding；
-- 16-chapter sample output and Atomic Claim regression；
-- `PACKAGE_FILES` exactly matches an independent immutable 23-file release contract；
-- actual installation output exactly matches that 23-file package allowlist；
-- regression fixture confirms that an untracked `.env` and private interview transcript are not copied；
-- Windows fixtures reject source-ancestor, destination-ancestor and direct-destination Junctions; a direct source-file Symlink is also rejected where the platform permits creating one；
-- simulated staging-copy and post-backup rename failures preserve the previous `--force` installation and leave no temporary directories；
-- `PM_INTERVIEW_REVIEW_HOME` override is honored。
+## 2. Full Fresh-session Test
 
-## 3. Installer Matrix
+Invocation: `$pm-interview-transcript-review` in a fresh agent session.
 
-User-scope dry runs passed for:
+Session: `20260814_141432_bed5fb`
 
-| Agent target | Resolved directory on the test machine |
-|---|---|
-| universal / Codex / Copilot / VS Code | `C:\Users\24425\.agents\skills\pm-interview-transcript-review` |
-| Claude Code | `C:\Users\24425\.claude\skills\pm-interview-transcript-review` |
-| Cursor | `C:\Users\24425\.cursor\skills\pm-interview-transcript-review` |
-| Gemini CLI | `C:\Users\24425\.gemini\skills\pm-interview-transcript-review` |
-| OpenCode | `C:\Users\24425\.config\opencode\skills\pm-interview-transcript-review` |
-| Hermes Agent | `C:\hermes\skills\pm-interview-transcript-review` |
-
-Project-scope dry runs passed for `.agents/skills`、`.claude/skills`、`.cursor/skills`、`.gemini/skills` 和 `.opencode/skills`。`--target` was also exercised by the installer smoke test in a temporary directory.
-
-The installer refuses to overwrite an existing target unless `--force` is supplied, rejects symbolic links and Windows junction/reparse points in every traversed source or destination path component, rejects non-directory targets and recursive installation inside its own source repository, and copies only its explicit package allowlist. It stages beside the destination before replacement, so a staging copy failure leaves the previous installation intact. Extra files—including `.env` files and private transcripts—are excluded by construction rather than by a fragile ignore list.
-
-## 4. Real Client Discovery Tests
-
-Three isolated Git repositories were created. The Skill was installed into each client's documented project directory. The prompt asked for two fields that exist in the loaded Skill but were not supplied in the installation command:
-
-```text
-Next Interview Actions | PM_INTERVIEW_REVIEW_HOME
-```
-
-### Codex CLI 0.147.0
-
-- Install location: `.agents/skills/pm-interview-transcript-review/`
-- Invocation: explicit `$pm-interview-transcript-review`
-- Result: **PASS**
-- Returned exactly: `Next Interview Actions | PM_INTERVIEW_REVIEW_HOME`
-
-### Claude Code 2.1.233
-
-- Install location: `.claude/skills/pm-interview-transcript-review/`
-- Result: **PASS**
-- Returned exactly: `Next Interview Actions | PM_INTERVIEW_REVIEW_HOME`
-- Environment note: Claude Code emitted unrelated `unrecognized_model` warnings for the locally configured session-title/helper models, but the main Skill result was correct.
-
-### Gemini CLI 0.54.0
-
-- Install location: `.gemini/skills/pm-interview-transcript-review/`
-- File installation and documented target resolution: **PASS**
-- End-to-end model invocation: **BLOCKED BY CLIENT AUTH**, not by the Skill
-- The installed CLI returned `IneligibleTierError / UNSUPPORTED_CLIENT` for the user's legacy Gemini Code Assist individual tier before Agent execution. Therefore this report does **not** claim a Gemini model-level activation pass.
-- Running `gemini skills list` without trust correctly skipped project agents; retrying with `--skip-trust` still hit the same authentication blocker.
-
-This distinction matters: a copied file is not evidence of runtime activation. Only Codex and Claude are counted as end-to-end client passes in this environment.
-
-## 5. Local Workspace Lifecycle
-
-An isolated temporary workspace was exercised through the real script:
-
-```bash
-python scripts/interview_os.py --root <temp> init
-python scripts/interview_os.py --root <temp> status
-```
-
-Result: **PASS**.
-
-Created:
-
-```text
-aggregates/
-calibration-events.jsonl
-config.json
-interviews/
-```
-
-Initial status correctly reported zero interviews, questions, competencies, anti-patterns, projects, stories and outcomes.
-
-## 6. Full Review Behavior Baseline
-
-The fictional fixture covers:
-
-- self-introduction；
-- one PM project；
-- 10 follow-up nodes under one root, including nested `Q02.2.1`、`Q02.4.1`、`Q02.5.1`；
-- data anomaly and Attribution failure；
-- AI Product and Growth questions；
-- reverse interview；
-- an obvious ownership mistake。
-
-Artifacts:
+Artifact:
 
 - `examples/test-run-output.md`
 - `examples/test-run-output.html`
 
 Observed:
 
-- all 16 chapters generated；
-- Q02 follow-ups hierarchical rather than flat；
-- important reviews showed dynamic weights, cap, Evidence and Root Cause；
-- Shortcoming Cards prioritized；
-- Shadow JD grounded in reverse-interview Evidence；
-- first-session history marked `Insufficient history`；
-- Chapter 11 uses `Role-specific Review`; Strategy was correctly marked `Not activated` for the fictional AI Growth role。
+- Skill triggered and loaded its Full Review template, scoring, PM taxonomy and history references.
+- Generated all 16 chapters.
+- Q02 follow-ups were hierarchical rather than flat.
+- Important reviews showed dynamic weights, cap, Evidence and Root Cause.
+- Five Shortcoming Cards were prioritized.
+- Shadow JD used reverse-interview Evidence.
+- First-session history was correctly marked `Insufficient history`.
 
-## 7. Atomic Claim Regression
+## 3. Defect Found and Fixed
 
-The initial full-output test expanded resume evidence “做过用户访谈和原型” into the unsupported insight “用户常常不知道怎么描述需求”. A placeholder appended after that claim did not make the unsupported claim grounded.
+The initial full output expanded resume evidence “做过用户访谈和原型” into the unsupported insight “用户常常不知道怎么描述需求”. A placeholder appended after that claim did not make it grounded. This violated the no-fabrication contract even though the child session's self-check incorrectly reported zero fabrication.
 
-Fixes retained in the portable version:
+Fixes applied:
 
-1. mandatory Atomic Claim Audit；
-2. action evidence does not prove the action's result or insight；
-3. hypothetical proposals must be framed as proposal/hypothesis；
-4. unsupported claims must be deleted or wholly replaced by placeholders；
-5. negative-entailment check；
-6. fixture-level regression assertion。
+1. Patched `SKILL.md` with mandatory Atomic Claim Audit and negative-entailment check.
+2. Clarified that a source proving an action does not prove the action's result or insight.
+3. Required hypothetical proposals to be explicitly framed as proposal/hypothesis.
+4. Patched the sample output to replace the unsupported insight with a full placeholder.
+5. Added a fixture-level regression assertion.
+
+## 4. Atomic Claim Regression
+
+Fresh regression session: `20260814_143332_e567e7`
 
 Artifact: `examples/atomic-claim-regression.md`
 
-Result: **PASS**. “用户不会描述需求” appears only as a labeled hypothesis, not as a fabricated past finding.
+Result: **PASS**.
 
-## 8. History / Outcome Calibration Baseline
+The output explicitly states that “做过用户访谈” cannot entail a specific user insight. “用户不会描述需求” appears only as a clearly labeled hypothesis, and the missing real interview finding remains a placeholder. The regression includes an Atomic Claim table and negative-entailment check.
 
-A temporary workspace was initialized, the simulated record was validated and saved, and a rejected outcome was appended.
+## 5. History / Outcome Calibration
 
-Deterministic result:
+A temporary workspace was initialized, the simulated record was validated and saved, then an inline rejected outcome was added.
+
+Final deterministic result:
 
 - interviews: 1
 - question-bank items: 16 interviewer questions
@@ -190,50 +88,48 @@ Deterministic result:
 - calibration events: 1
 - original verdict preserved: true
 
-The script supports distinct `--feedback` text and `--feedback-file` inputs with mutual exclusion.
+The first run exposed an ergonomics issue: argparse treated the abbreviated `--feedback` as `--feedback-file`. The script was fixed to support distinct `--feedback` text and `--feedback-file` inputs, with mutual exclusion.
 
-## 9. Media Pipeline Baseline
+## 6. Media Pipeline
 
-A 20.102-second Chinese synthetic WAV was previously processed through the actual local pipeline:
+A 20.102-second Chinese SAPI-generated WAV was processed through the actual local pipeline:
 
-```text
-WAV → ffmpeg 16k mono WAV → faster-whisper
-→ TXT / Markdown / VTT / segments JSON / metadata
-```
+`WAV → ffmpeg 16k mono WAV → faster-whisper → TXT / Markdown / VTT / segments JSON / metadata`
 
 Result:
 
 - detected language: zh
-- segment count: 3
+- segment count: 3 (base model final run; small model was also exercised)
 - speaker labels: 3 × `Unknown Speaker`
 - output files: 6
 - timestamped output: present
+- triple-blank formatting regression: false
 
-The pipeline correctly did not invent speaker identity. It does not claim reliable acoustic diarization, and ASR errors remain possible.
-
-## 10. Stable Front-module Regression
-
-Version 2.1.0 separates factual dialogue, answer suggestions, and reverse-interview exchanges before rendering the report:
-
-```text
-Transcript → schema 1.1 record.json → chapter 0 → chapters 1–16
-```
-
-The simulated fixture now contains 17 question nodes, 16 interviewer-led transcript pairs, 16 answer suggestions, and one candidate-reverse-question exchange. Validation asserts:
-
-- chapter 0 contains the ordered `0.1 / 0.2 / 0.3` modules；
-- every root/follow-up appears exactly once with raw question and raw candidate response；
-- every captured root/follow-up has exactly one answer suggestion and provenance；
-- candidate reverse questions have a paired interviewer response and no Better Answer；
-- chapter 6 references chapter 0.2 instead of duplicating Suggested Answers；
-- chapter 13 extracts information without rewriting the candidate's reverse question；
-- Markdown raw dialogue and suggestions match the structured record；
-- schema 1.0 records remain readable by `interview_os.py`, while new records use schema 1.1。
-
-Result: **PASS** — 16/16 transcript pairs, 16/16 answer suggestions, 1/1 reverse exchange.
+The pipeline correctly did **not** invent speaker identity. Base/small ASR still made minor recognition errors on synthetic speech, so source audio and raw evidence must be retained.
 
 ## Final Acceptance
 
-**PASS for Agent Skills format, deterministic scripts, installer, Codex discovery, Claude Code discovery, stable chapter 0 rendering, report structure and behavior regressions.**
+**PASS after two defects were found and fixed.**
 
-**Gemini end-to-end activation remains unverified because the installed client was rejected by Google's account-tier authentication before Agent execution.** OpenCode and Cursor path compatibility is based on their documented discovery locations plus installer tests; those clients were not available for model-level execution in this environment.
+The tests prove installation, trigger loading, transcript analysis, Follow-up Tree reconstruction, evidence behavior, HTML rendering, deterministic history aggregation, outcome append and local ASR execution. They do not prove reliable acoustic diarization or perfect ASR accuracy on noisy real interviews.
+
+## 8. Codex + Feishu Automation Regression (2026-08-25)
+
+The repository was converted to a Codex-first, per-administrator deployment. Each administrator uses their own ChatGPT login for `codex exec`, their own Feishu app credentials, and the organization-provided fixed Wiki target.
+
+Verified locally:
+
+- the bundled Codex CLI reports `Logged in using ChatGPT`;
+- the bridge removes OpenAI API key and custom API base variables before starting Codex;
+- `lark-channel-sdk==1.2.0` imports with the documented `FeishuChannel` and `PolicyConfig` API;
+- the combined automated report contract requires the original question/reply preface plus all 16 chapters;
+- Markdown-to-Feishu conversion, node creation, block batching, readback verification, retry behavior, allowlist configuration and message/file idempotency pass eight unit tests;
+- the current stabilized Full Review converts into 661 Feishu document blocks in dry-run mode;
+- `quick_validate.py`, `validate_skill.py`, `validate_review.py --automated`, Python compilation and whitespace checks pass.
+
+Not verified in this environment:
+
+- receiving a real recording from a user's Feishu bot;
+- creating and reading back a document in the organization's fixed Wiki.
+
+Those two checks require the real `space_id`, optional `parent_node_token`, tenant domain, app ID and app secret. The onboarding guide treats a real test recording and returned Wiki link as the final acceptance gate; offline success must not be reported as live end-to-end success.

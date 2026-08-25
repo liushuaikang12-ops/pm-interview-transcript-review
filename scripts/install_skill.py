@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Install this repository as an Agent Skill without third-party dependencies."""
+"""Install this repository into a Codex skills directory."""
 from __future__ import annotations
 
 import argparse
@@ -11,27 +11,29 @@ from pathlib import Path
 SKILL_NAME = "pm-interview-transcript-review"
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 SUPPORTED_AGENTS = (
-    "universal",
     "codex",
-    "claude",
-    "cursor",
-    "gemini",
-    "opencode",
-    "copilot",
-    "vscode",
-    "hermes",
 )
 PACKAGE_FILES = (
     "SKILL.md",
     "README.md",
     "LICENSE",
+    "agents/openai.yaml",
+    "requirements-feishu.txt",
     "scripts/install_skill.py",
     "scripts/interview_os.py",
     "scripts/transcribe_media.py",
     "scripts/render_review.py",
     "scripts/validate_skill.py",
+    "scripts/feishu_common.py",
+    "scripts/setup_codex_feishu.py",
+    "scripts/doctor.py",
+    "scripts/validate_review.py",
+    "scripts/publish_feishu_wiki.py",
+    "scripts/codex_feishu_bridge.py",
     "templates/full-review.md",
     "templates/interview-record.schema.json",
+    "templates/organization-config.example.json",
+    "references/codex-feishu-automation.md",
     "references/external-design-notes.md",
     "references/history-and-calibration.md",
     "references/media-pipeline.md",
@@ -50,35 +52,14 @@ PACKAGE_FILES = (
 
 def user_root(agent: str) -> Path:
     home = Path.home()
-    if agent in {"universal", "codex", "copilot", "vscode"}:
+    if agent == "codex":
         return home / ".agents" / "skills"
-    if agent == "claude":
-        return home / ".claude" / "skills"
-    if agent == "cursor":
-        return home / ".cursor" / "skills"
-    if agent == "gemini":
-        return home / ".gemini" / "skills"
-    if agent == "opencode":
-        config = Path(os.environ.get("XDG_CONFIG_HOME", home / ".config"))
-        return config / "opencode" / "skills"
-    if agent == "hermes":
-        return Path(os.environ.get("HERMES_HOME", home / ".hermes")) / "skills"
     raise ValueError(f"unsupported agent: {agent}")
 
 
 def project_root(agent: str, project_dir: Path) -> Path:
-    if agent in {"universal", "codex", "copilot", "vscode"}:
+    if agent == "codex":
         return project_dir / ".agents" / "skills"
-    if agent == "claude":
-        return project_dir / ".claude" / "skills"
-    if agent == "cursor":
-        return project_dir / ".cursor" / "skills"
-    if agent == "gemini":
-        return project_dir / ".gemini" / "skills"
-    if agent == "opencode":
-        return project_dir / ".opencode" / "skills"
-    if agent == "hermes":
-        raise ValueError("Hermes project-scope discovery is not assumed; use --scope user or --target")
     raise ValueError(f"unsupported agent: {agent}")
 
 
@@ -192,9 +173,9 @@ def install(destination: Path, force: bool) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Install pm-interview-transcript-review into an Agent Skills directory"
+        description="Install pm-interview-transcript-review into a Codex skills directory"
     )
-    parser.add_argument("--agent", choices=SUPPORTED_AGENTS, default="universal")
+    parser.add_argument("--agent", choices=SUPPORTED_AGENTS, default="codex")
     parser.add_argument("--scope", choices=("user", "project"), default="user")
     parser.add_argument("--project-dir", help="project root for --scope project; defaults to current directory")
     parser.add_argument("--target", help="custom Skills root; overrides --agent and --scope")

@@ -1,0 +1,7 @@
+interface:
+  display_name: "PM Interview Review"
+  short_description: "复盘产品经理面试录音并自动归档飞书知识库"
+  default_prompt: "Use $pm-interview-transcript-review to review this interview recording and publish the verified report when Feishu automation is configured."
+
+policy:
+  allow_implicit_invocation: true

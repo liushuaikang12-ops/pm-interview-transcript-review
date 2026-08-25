@@ -1,0 +1,5 @@
+lark-channel-sdk>=1.2,<2
+faster-whisper>=1.1,<2
+jsonschema>=4,<5
+PyYAML>=6,<7
+Markdown>=3,<4
