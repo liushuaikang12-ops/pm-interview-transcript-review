@@ -34,8 +34,10 @@ from feishu_common import (  # noqa: E402
 from publish_feishu_wiki import (  # noqa: E402
     append_blocks,
     create_wiki_node,
+    delete_direct_children,
     markdown_to_blocks,
     publish,
+    replace_blocks,
     verify_blocks,
 )
 from validate_review import validate  # noqa: E402
@@ -75,6 +77,34 @@ class PaginatedBlocksAPI:
                 "page_token": "next page",
             },
         }
+
+
+class MutableDocumentAPI:
+    def __init__(self, child_count: int) -> None:
+        self.children = [
+            {"block_id": f"child-{index}", "text": {"elements": []}}
+            for index in range(child_count)
+        ]
+        self.calls: list[tuple[str, str, object]] = []
+
+    def request(self, method: str, path: str, body=None):
+        self.calls.append((method, path, body))
+        if method == "GET" and "/children?" in path:
+            return {"code": 0, "data": {"items": list(self.children)}}
+        if method == "DELETE" and path.endswith("batch_delete?document_revision_id=-1"):
+            start = body["start_index"]
+            end = body["end_index"]
+            del self.children[start:end]
+            return {"code": 0, "data": {}}
+        if method == "POST" and path.endswith("/children"):
+            self.children.extend(body["children"])
+            return {"code": 0, "data": {}}
+        if method == "GET" and path.endswith("blocks?page_size=50"):
+            return {
+                "code": 0,
+                "data": {"items": [{"block_id": "root"}, *self.children]},
+            }
+        raise AssertionError(f"unexpected request: {method} {path}")
 
 
 class FakeResponse:
@@ -254,6 +284,28 @@ PRIVATE DIAGNOSIS
         )
         self.assertEqual(len(api.paths), 2)
         self.assertIn("page_token=next%20page", api.paths[1])
+
+    def test_existing_document_replacement_deletes_tail_batches_and_verifies_text(self) -> None:
+        api = MutableDocumentAPI(121)
+        replacement = markdown_to_blocks("# 脱敏版\n\n保留面试官原文和回答建议。")
+        removed, verified = replace_blocks(api, "doc id", replacement)
+        self.assertEqual(removed, 121)
+        self.assertEqual(verified, len(replacement) + 1)
+        delete_bodies = [
+            body for method, _, body in api.calls if method == "DELETE"
+        ]
+        self.assertEqual(
+            delete_bodies,
+            [
+                {"start_index": 71, "end_index": 121},
+                {"start_index": 21, "end_index": 71},
+                {"start_index": 0, "end_index": 21},
+            ],
+        )
+
+    def test_delete_rejects_unsafe_batch_size(self) -> None:
+        with self.assertRaises(ValueError):
+            delete_direct_children(MutableDocumentAPI(1), "doc", batch_size=51)
 
     def test_config_rejects_persisted_secrets(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
